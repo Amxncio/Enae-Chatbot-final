@@ -147,6 +147,7 @@ El proyecto se despliega como función serverless Python en Vercel.
 | Catálogo de intents | [`docs/intents_catalog.md`](docs/intents_catalog.md) |
 | Reglas SDD | [`docs/SDD_PROJECT_RULES.md`](docs/SDD_PROJECT_RULES.md) |
 | Conversaciones de aceptación | [`docs/acceptance_conversations.md`](docs/acceptance_conversations.md) |
+| Checklist final de evidencias | [`docs/final_evidence_checklist.md`](docs/final_evidence_checklist.md) |
 
 ---
 
@@ -209,3 +210,13 @@ Respuesta real de la tool `check_availability` tras integrar Calendly:
 - **Cadena:** LangChain (prompt + memoria + RAG + tools)
 - **RAG:** BM25 (`rank_bm25`) — sin API key de embeddings
 - **Deploy:** Vercel (Python serverless)
+
+---
+
+## Tests rápidos
+
+Tests mínimos de la tool de disponibilidad:
+
+```bash
+python -m pytest tests/test_availability_tool.py
+```
