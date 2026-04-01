@@ -30,7 +30,8 @@ async def _startup():
 @app.get("/", response_class=HTMLResponse, summary="Home")
 async def home(request: Request):
     """Serve the chat UI."""
-    return _templates.TemplateResponse("chat.html", {"request": request})
+    # Starlette/FastAPI current signature expects request first.
+    return _templates.TemplateResponse(request=request, name="chat.html")
 
 
 @app.post("/ask_bot", summary="Ask Bot")
