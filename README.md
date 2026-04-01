@@ -1,0 +1,176 @@
+# Chatbot Clínica Veterinaria — ENAE Business School
+
+> **Data Science e IA para la Toma de Decisiones**
+> Caso final: chatbot para agendar esterilización/castración en una clínica veterinaria.
+
+| Campo | Valor |
+|-------|-------|
+| **Equipo** | Amancio |
+| **Repo** | [Enae-Chatbot-final](https://github.com/Amxncio/Enae-Chatbot-final) |
+| **Jira** | [Board EV](https://amxncio.atlassian.net/jira/software/projects/EV/boards/34) |
+| **Vercel** | *(URL del despliegue — completar tras deploy)* |
+
+---
+
+## Visión del producto (MVP)
+
+Chatbot conversacional que **reduce el tiempo y la fricción** al coordinar citas de castración y esterilización. El bot conoce las reglas del dominio (tiempos quirúrgicos, ventanas de entrega, restricciones "Tetris"), puede consultar disponibilidad y responder dudas preoperatorias con información verificada vía RAG.
+
+---
+
+## Qué hemos implementado
+
+| Tramo | Pts | Estado | Descripción |
+|-------|-----|--------|-------------|
+| Base (memoria + dominio) | 5 | Done | System prompt + memoria por sesión + dominio vía prompt y RAG |
+| Vercel | +1 | Done | Deploy funcional, env vars en panel |
+| Jira | +1 | Done | Board con tickets VET-1…VET-14, 3 EPICs |
+| RAG (URL oficial) | +1 | Done | Pipeline BM25 desde la URL oficial de instrucciones preoperatorias |
+| Tool disponibilidad | +1 | Done | Mock con algoritmo Tetris (240 min, máx 2 perros, ventanas) |
+| Intents | +1 | Done | 20 intents + mapa a conv. 1–10 |
+
+---
+
+## Instalación local
+
+```bash
+# 1. Clonar el repo
+git clone https://github.com/Amxncio/Enae-Chatbot-final.git
+cd Enae-Chatbot-final
+
+# 2. Crear entorno virtual
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+
+# 3. Instalar dependencias
+pip install -r requirements.txt
+
+# 4. Configurar variables de entorno
+cp .env.example .env
+# Editar .env y poner tu GROQ_API_KEY (gratis en https://console.groq.com/keys)
+
+# 5. Arrancar el servidor
+uvicorn app.main:app --reload --port 8000
+```
+
+Abre [http://localhost:8000](http://localhost:8000) para ver la UI del chat.
+
+---
+
+## Variables de entorno
+
+| Variable | Descripción | Dónde |
+|----------|-------------|-------|
+| `GROQ_API_KEY` | Clave API de Groq (LLM) | `.env` local / panel Vercel |
+
+> **`.env.example`** contiene placeholders sin secretos. Nunca subir claves reales al repo.
+
+---
+
+## API — OpenAPI / Swagger
+
+Con el servidor levantado, la documentación interactiva está en:
+
+- **Swagger UI:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **ReDoc:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+### Endpoints
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/` | UI del chat (HTML) |
+| `POST` | `/ask_bot` | Enviar mensaje al bot |
+
+#### `POST /ask_bot`
+
+```bash
+curl -X POST http://localhost:8000/ask_bot \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "msg=Hello&session_id=test1"
+```
+
+---
+
+## RAG — Pipeline de recuperación
+
+**Fuente oficial:** [Pre-Surgery Instructions](https://veterinary-clinic-teal.vercel.app/en/docs/instructions-before-operation)
+
+### Cómo funciona
+
+1. **Fetch:** Se descarga el contenido de la URL oficial (con fallback a `app/data/rag_source.txt`).
+2. **Chunking:** Se divide en fragmentos de ~300 caracteres con solapamiento.
+3. **Indexación:** Se construye un índice BM25 (sin necesidad de embeddings externos).
+4. **Retrieval:** Para cada pregunta del usuario, se recuperan los 3 chunks más relevantes.
+5. **Inyección:** Los chunks se inyectan en el prompt como contexto antes de llamar al LLM.
+
+### Preguntas de prueba
+
+| Pregunta | Respuesta esperada |
+|----------|--------------------|
+| "What should I do before the surgery?" | Ayuno 8-12h, vacunación, desparasitación |
+| "Can my cat be operated while in heat?" | Sí, los gatos pueden operarse en celo |
+| "My dog is in heat, can she be sterilised?" | No, esperar 2 meses tras el celo |
+
+---
+
+## Tool de disponibilidad
+
+El chatbot dispone de una herramienta (`check_availability`) que el LLM puede invocar para consultar disponibilidad quirúrgica.
+
+- **Algoritmo Tetris:** ≤240 min/día, máx 2 perros/día, ventanas de entrega por especie.
+- **Datos mock:** Calendario simulado lun–jue con ocupación variable.
+- **Evidencia:** Conv. 8 y 9 del documento de aceptación.
+
+---
+
+## Despliegue — Vercel
+
+El proyecto se despliega como función serverless Python en Vercel.
+
+- **URL:** *(completar tras deploy)*
+- **Env vars:** Configuradas solo en el panel de Vercel (Settings → Environment Variables).
+- **Build:** Automático al hacer push a `main`.
+
+---
+
+## Documentación del dominio
+
+| Documento | Ruta |
+|-----------|------|
+| Material preparatorio | [`docs/preparatory.md`](docs/preparatory.md) |
+| Event Storming (Mermaid) | [`docs/event_storming.md`](docs/event_storming.md) |
+| Reglas de negocio | [`docs/business_rules.md`](docs/business_rules.md) |
+| Catálogo de intents | [`docs/intents_catalog.md`](docs/intents_catalog.md) |
+| Reglas SDD | [`docs/SDD_PROJECT_RULES.md`](docs/SDD_PROJECT_RULES.md) |
+| Conversaciones de aceptación | [`docs/acceptance_conversations.md`](docs/acceptance_conversations.md) |
+
+---
+
+## Backlog / Tickets
+
+| ID | Épica | Resumen | SP | Estado |
+|----|-------|---------|----|--------|
+| VET-1 | SET UP | Repo baseline y accesos | 1 | Done |
+| VET-2 | SET UP | README maestro | 2 | Done |
+| VET-3 | SET UP | Vercel + deploy | 2 | Done |
+| VET-14 | SET UP | Docs dominio en repo | 2 | Done |
+| VET-4 | SDD | Reglas SDD: repo + Jira | 1 | Done |
+| VET-5 | SDD | Comando enrich | 2 | Done |
+| VET-6 | SDD | Comando implementar | 2 | Done |
+| VET-7 | CHATBOT | FastAPI 2 endpoints + Swagger | 1 | Done |
+| VET-8 | CHATBOT | UI chat inyectable | 1 | Done |
+| VET-9 | CHATBOT | ask_bot + LLM + prompt | 2 | Done |
+| VET-10 | CHATBOT | Memoria por session_id | 2 | Done |
+| VET-11 | CHATBOT | RAG URL oficial | 2 | Done |
+| VET-12 | CHATBOT | Tool disponibilidad (mock) | 2 | Done |
+| VET-13 | CHATBOT | Tool + calendario real | 3 | Pendiente |
+
+---
+
+## Stack tecnológico
+
+- **LLM:** Groq (`llama-3.3-70b-versatile`) — gratis
+- **Framework:** FastAPI + Jinja2
+- **Cadena:** LangChain (prompt + memoria + RAG + tools)
+- **RAG:** BM25 (`rank_bm25`) — sin API key de embeddings
+- **Deploy:** Vercel (Python serverless)

@@ -1,0 +1,46 @@
+---
+description: Enrich a Jira ticket or spec with acceptance criteria, risks, and domain references
+globs:
+alwaysApply: false
+---
+
+# Enrich Command
+
+## Purpose
+
+Take a skeletal Jira ticket or brief note and expand it into a fully specified story ready for implementation.
+
+## Input
+
+- A ticket ID (e.g., VET-7) or a brief description of the feature.
+- Context: the project repository and Jira board (see `docs/SDD_PROJECT_RULES.md`).
+
+## Process
+
+1. **Read** the current ticket description (from Jira or from the user's input).
+2. **Expand** with:
+   - Clear **summary** (one sentence).
+   - Detailed **description** covering what to build and why.
+   - **Acceptance criteria** (numbered, testable statements).
+   - **Risks and dependencies** (other tickets, external APIs, etc.).
+   - **Domain references**: link to relevant docs (`docs/business_rules.md`, `docs/event_storming.md`, intents from `docs/intents_catalog.md`).
+   - **Story points** estimate (1/2/3 scale).
+3. **Output** the enriched ticket as structured text ready to paste into Jira.
+
+## Example
+
+**Before (skeletal):**
+> "Add memory to the chatbot"
+
+**After (enriched):**
+> **Summary:** Persist conversation context per session_id so the chatbot remembers previous turns.
+> **Description:** Add InMemoryChatMessageHistory keyed by session_id. The frontend sends session_id with each request...
+> **Acceptance criteria:** (1) Two different session_ids do not share history. (2) Same session_id maintains coherence across 5+ turns...
+> **Risks:** Memory grows unbounded; add a max-turns limit. Depends on VET-9 (ask_bot endpoint).
+> **Domain refs:** Conv. 2 and 6 require memory of species mentioned in earlier turns.
+> **SP:** 2
+
+## Rules
+
+- Always reference `docs/SDD_PROJECT_RULES.md` for repo and Jira norms.
+- Do not implement; only enrich the specification.

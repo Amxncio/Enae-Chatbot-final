@@ -1,0 +1,53 @@
+---
+description: Implement a feature from a Jira ticket or spec, following spec-first and SDD rules
+globs:
+alwaysApply: false
+---
+
+# Implement Command
+
+## Purpose
+
+Take an enriched Jira ticket or specification and guide the implementation through to completion.
+
+## Input
+
+- A ticket ID (e.g., VET-11) or a spec file path (e.g., `docs/specs/VET-11.md`).
+- The project repository context.
+
+## Process
+
+1. **Read the spec** — Load the ticket description and acceptance criteria. If a spec file exists in `docs/`, read it first.
+2. **Plan** — Break the work into small steps. Identify which files to create or modify.
+3. **Implement** — Write code following these role-based guidelines:
+   - **Backend engineer:** FastAPI endpoints, bot logic, RAG pipeline, tools. Follow `app/` structure.
+   - **Frontend engineer:** Chat UI, templates. Keep it simple and functional.
+   - **Product manager:** README updates, documentation, Jira ticket status.
+4. **Verify** — Check that all acceptance criteria are met. Run linting if available.
+5. **Update README** — Fill in the corresponding section of `README.md` for the feature.
+6. **Cross-reference** — Note the Jira ticket ID in the commit message and update the ticket status.
+
+## Commit convention
+
+```
+feat(VET-XX): Short description of what was implemented
+
+- Acceptance criterion 1: met
+- Acceptance criterion 2: met
+```
+
+## Rules
+
+- Always follow `docs/SDD_PROJECT_RULES.md` for repo and Jira norms.
+- Spec first, code second. Never start coding without reading the full spec.
+- One ticket = one branch = one focused PR (when possible).
+- No secrets in code; environment variables only.
+
+## Skills / Subagents
+
+This command assumes the following capabilities are available:
+- **Backend engineer**: Python, FastAPI, LangChain, Groq, RAG
+- **Frontend engineer**: HTML, CSS, JavaScript, Jinja2
+- **Product manager**: README, documentation, Jira ticket management
+
+Each skill can be invoked as a subagent in Cursor for parallel work on independent tasks.
