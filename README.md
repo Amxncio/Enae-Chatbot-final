@@ -127,6 +127,32 @@ El chatbot dispone de una herramienta (`check_availability`) que el LLM puede in
 
 ---
 
+## Flujo guiado de cita (memoria real)
+
+El bot ahora sigue un flujo estricto por pasos para evitar respuestas prematuras:
+
+1. Servicio (esterilizacion/castracion)
+2. Especie (gato/perro)
+3. Sexo (macho/hembra)
+4. Peso solo si es perra
+5. Fecha preferida (opcional)
+
+Solo cuando los datos obligatorios estan completos consulta `check_availability`.
+Si falta algo, pregunta un unico dato por turno y reutiliza memoria de la sesion para no repetir preguntas.
+
+Ejemplo breve:
+
+- Usuario: "Quiero una cita"
+- Bot: "¿Quieres esterilizacion/castracion?"
+- Usuario: "Si, para una perra"
+- Bot: "¿Es macho o hembra?"
+- Usuario: "Hembra"
+- Bot: "¿Cuanto pesa en kg?"
+- Usuario: "12 kg"
+- Bot: devuelve disponibilidad con ventana de entrega + ayuno + recogida.
+
+---
+
 ## Despliegue — Vercel
 
 El proyecto se despliega como función serverless Python en Vercel.
@@ -215,8 +241,8 @@ Respuesta real de la tool `check_availability` tras integrar Calendly:
 
 ## Tests rápidos
 
-Tests mínimos de la tool de disponibilidad:
+Tests mínimos de disponibilidad y flujo guiado:
 
 ```bash
-python -m pytest tests/test_availability_tool.py
+python -m pytest -q
 ```
