@@ -8,7 +8,7 @@
 | **Equipo** | Amancio |
 | **Repo** | [Enae-Chatbot-final](https://github.com/Amxncio/Enae-Chatbot-final) |
 | **Jira** | [Board EV](https://amxncio.atlassian.net/jira/software/projects/EV/boards/34) |
-| **Vercel** | *(URL del despliegue — completar tras deploy)* |
+| **Vercel** | [enae-chatbot-final.vercel.app](https://enae-chatbot-final.vercel.app) |
 
 ---
 
@@ -62,6 +62,9 @@ Abre [http://localhost:8000](http://localhost:8000) para ver la UI del chat.
 | Variable | Descripción | Dónde |
 |----------|-------------|-------|
 | `GROQ_API_KEY` | Clave API de Groq (LLM) | `.env` local / panel Vercel |
+| `CALENDLY_TOKEN` | Personal Access Token de Calendly | `.env` local / panel Vercel |
+| `CALENDLY_EVENT_TYPE_CAT_URI` | URI del tipo de evento para gatos | `.env` local / panel Vercel |
+| `CALENDLY_EVENT_TYPE_DOG_URI` | URI del tipo de evento para perros | `.env` local / panel Vercel |
 
 > **`.env.example`** contiene placeholders sin secretos. Nunca subir claves reales al repo.
 
@@ -118,7 +121,8 @@ curl -X POST http://localhost:8000/ask_bot \
 El chatbot dispone de una herramienta (`check_availability`) que el LLM puede invocar para consultar disponibilidad quirúrgica.
 
 - **Algoritmo Tetris:** ≤240 min/día, máx 2 perros/día, ventanas de entrega por especie.
-- **Datos mock:** Calendario simulado lun–jue con ocupación variable.
+- **Modo real (VET-13):** consulta de slots reales con Calendly (`/event_type_available_times`).
+- **Fallback seguro:** si Calendly falla o no está configurado, usa calendario mock lun–jue.
 - **Evidencia:** Conv. 8 y 9 del documento de aceptación.
 
 ---
@@ -163,7 +167,38 @@ El proyecto se despliega como función serverless Python en Vercel.
 | VET-10 | CHATBOT | Memoria por session_id | 2 | Done |
 | VET-11 | CHATBOT | RAG URL oficial | 2 | Done |
 | VET-12 | CHATBOT | Tool disponibilidad (mock) | 2 | Done |
-| VET-13 | CHATBOT | Tool + calendario real | 3 | Pendiente |
+| VET-13 | CHATBOT | Tool + calendario real | 3 | Done |
+
+---
+
+## Skills de Cursor (SDD)
+
+Para que el profesor vea claramente la parte de Skills:
+
+- Skill de enrich: `.cursor/skills/enrich-jira-ticket/SKILL.md`
+- Skill de implementación: `.cursor/skills/implement-from-spec/SKILL.md`
+
+Uso típico en Cursor:
+
+1. Abrir el ticket en Jira (o pegar el contexto del ticket).
+2. Ejecutar la skill **enrich-jira-ticket** para completar objetivo, criterios, dependencias, riesgos y evidencia.
+3. Ejecutar la skill **implement-from-spec** para llevar el ticket enriquecido a cambios en código y verificación final.
+
+---
+
+## Evidencia VET-13 (Calendly real)
+
+Respuesta real de la tool `check_availability` tras integrar Calendly:
+
+```json
+{
+  "available": true,
+  "mode": "real_calendly",
+  "date": "2026-04-01",
+  "calendar_slot_start_utc": "2026-04-01T17:00:00Z",
+  "surgery_duration_minutes": 15
+}
+```
 
 ---
 
