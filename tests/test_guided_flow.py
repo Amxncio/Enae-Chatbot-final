@@ -46,7 +46,8 @@ def test_guided_flow_calls_create_booking_on_confirm(monkeypatch):
                 '{"booked": true, "mode": "mock_fallback", "date": "2026-04-03", '
                 '"day_of_week": "Thursday", "delivery_window": "09:00–10:30", '
                 '"pickup_time": "approximately 12:00 (noon)", '
-                '"surgery_duration_minutes": 45, "gcal_event_link": null}'
+                '"surgery_duration_minutes": 45, "gcal_event_link": null, '
+                '"gcal_error": ""}'
             )
 
     monkeypatch.setattr(bot, "create_booking", FakeCreateBooking())

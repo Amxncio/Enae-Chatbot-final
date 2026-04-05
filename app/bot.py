@@ -339,6 +339,7 @@ def _render_booking_reply(result_json: str, slots: dict | None = None) -> str:
     pet         = data.get("pet_name", "")
     owner       = data.get("owner_name", "")
     gcal_link = data.get("gcal_event_link")
+    gcal_err = (data.get("gcal_error") or "").strip()
 
     pet_ref = f" para {pet}" if pet else ""
     mode_note = " (calendario real)" if data.get("mode") == "real_calendly" else ""
@@ -349,6 +350,14 @@ def _render_booking_reply(result_json: str, slots: dict | None = None) -> str:
             f"\n\n📅 **Ver en Google Calendar:** {gcal_link}"
             if es else
             f"\n\n📅 **View in Google Calendar:** {gcal_link}"
+        )
+    elif gcal_err:
+        # Ayuda a depurar en Vercel (403 = permisos, JSON inválido = pegado mal en env)
+        hint = gcal_err[:350] + ("…" if len(gcal_err) > 350 else "")
+        gcal_line = (
+            f"\n\n⚠️ **No se pudo crear el evento en Google Calendar:** {hint}"
+            if es else
+            f"\n\n⚠️ **Google Calendar event was not created:** {hint}"
         )
 
     if es:

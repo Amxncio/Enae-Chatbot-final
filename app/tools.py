@@ -196,13 +196,13 @@ def _create_google_calendar_event(
     pet_name: str,
     owner_name: str,
     owner_phone: str,
-) -> str | None:
+) -> tuple[str | None, str | None]:
     """Create a Google Calendar event for the confirmed appointment.
 
-    Returns the event htmlLink on success, None on failure or missing config.
+    Returns (htmlLink, None) on success, (None, error_message) on failure.
     """
     if not GOOGLE_SERVICE_ACCOUNT_JSON or not GOOGLE_CALENDAR_ID:
-        return None
+        return None, "Falta GOOGLE_SERVICE_ACCOUNT_JSON o GOOGLE_CALENDAR_ID en el entorno."
     try:
         import json as _json
 
@@ -246,9 +246,14 @@ def _create_google_calendar_event(
         created = service.events().insert(
             calendarId=GOOGLE_CALENDAR_ID, body=event_body
         ).execute()
-        return created.get("htmlLink")
-    except Exception:  # noqa: BLE001
-        return None
+        return created.get("htmlLink"), None
+    except json.JSONDecodeError as exc:
+        return None, f"JSON de cuenta de servicio inválido: {exc}"
+    except Exception as exc:  # noqa: BLE001
+        msg = str(exc)
+        if len(msg) > 400:
+            msg = msg[:400] + "…"
+        return None, msg
 
 
 def _register_booking_in_mock(booked_date: date, species: str, surgery_minutes: int) -> None:
@@ -421,7 +426,7 @@ def create_booking(
     _register_booking_in_mock(real_date, sp, surgery_min)
 
     # Create the Google Calendar event directly
-    gcal_link = _create_google_calendar_event(
+    gcal_link, gcal_err = _create_google_calendar_event(
         booked_date=real_date,
         species=sp,
         surgery_minutes=surgery_min,
@@ -447,4 +452,5 @@ def create_booking(
         "owner_phone": owner_phone,
         "pet_name": pet_name,
         "gcal_event_link": gcal_link,
+        "gcal_error": gcal_err or "",
     })
