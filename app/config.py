@@ -28,6 +28,16 @@ def _resolve_google_service_account_json() -> str:
             return path.read_text(encoding="utf-8")
     return ""
 
+
+def get_google_service_account_json() -> str:
+    """Read SA JSON at call time (Vercel/serverless: env is reliable per request, not only at import)."""
+    return _resolve_google_service_account_json()
+
+
+def get_google_calendar_id() -> str:
+    return os.getenv("GOOGLE_CALENDAR_ID", "").strip()
+
+
 GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL: str = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 RAG_SOURCE_URL: str = (
@@ -40,6 +50,6 @@ CALENDLY_USER_URI: str = os.getenv("CALENDLY_USER_URI", "")
 CALENDLY_EVENT_TYPE_CAT_URI: str = os.getenv("CALENDLY_EVENT_TYPE_CAT_URI", "")
 CALENDLY_EVENT_TYPE_DOG_URI: str = os.getenv("CALENDLY_EVENT_TYPE_DOG_URI", "")
 
-# Google Calendar integration — used to create actual booking events
+# Google Calendar — also use get_google_*() in tools (lazy) for serverless
 GOOGLE_SERVICE_ACCOUNT_JSON: str = _resolve_google_service_account_json()
-GOOGLE_CALENDAR_ID: str = os.getenv("GOOGLE_CALENDAR_ID", "")
+GOOGLE_CALENDAR_ID: str = os.getenv("GOOGLE_CALENDAR_ID", "").strip()

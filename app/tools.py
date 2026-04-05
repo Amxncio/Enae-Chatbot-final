@@ -13,8 +13,8 @@ from app.config import (
     CALENDLY_EVENT_TYPE_CAT_URI,
     CALENDLY_EVENT_TYPE_DOG_URI,
     CALENDLY_TOKEN,
-    GOOGLE_CALENDAR_ID,
-    GOOGLE_SERVICE_ACCOUNT_JSON,
+    get_google_calendar_id,
+    get_google_service_account_json,
 )
 
 SURGERY_TIMES: dict[tuple[str, str, str], int] = {
@@ -201,15 +201,25 @@ def _create_google_calendar_event(
 
     Returns (htmlLink, None) on success, (None, error_message) on failure.
     """
-    if not GOOGLE_SERVICE_ACCOUNT_JSON or not GOOGLE_CALENDAR_ID:
-        return None, "Falta GOOGLE_SERVICE_ACCOUNT_JSON o GOOGLE_CALENDAR_ID en el entorno."
+    sa_json = get_google_service_account_json().strip()
+    cal_id = get_google_calendar_id().strip()
+    if not sa_json:
+        return None, (
+            "Falta GOOGLE_SERVICE_ACCOUNT_JSON en Vercel (Settings → Environment Variables → "
+            "Production). Pega el JSON de la cuenta de servicio en una sola línea."
+        )
+    if not cal_id:
+        return None, (
+            "Falta GOOGLE_CALENDAR_ID en Vercel (mismo sitio, entorno Production). "
+            "Es el ID tipo xxx@group.calendar.google.com del calendario compartido con la SA."
+        )
     try:
         import json as _json
 
         from google.oauth2 import service_account
         from googleapiclient.discovery import build
 
-        creds_info = _json.loads(GOOGLE_SERVICE_ACCOUNT_JSON)
+        creds_info = _json.loads(sa_json)
         creds = service_account.Credentials.from_service_account_info(
             creds_info,
             scopes=["https://www.googleapis.com/auth/calendar"],
@@ -244,7 +254,7 @@ def _create_google_calendar_event(
             },
         }
         created = service.events().insert(
-            calendarId=GOOGLE_CALENDAR_ID, body=event_body
+            calendarId=cal_id, body=event_body
         ).execute()
         return created.get("htmlLink"), None
     except json.JSONDecodeError as exc:
