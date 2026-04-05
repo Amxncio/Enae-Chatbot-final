@@ -86,6 +86,7 @@ def _default_slots() -> dict:
         "in_flow": False,
         "service": "",         # sterilisation | vaccination | microchip
         "species": "",         # cat | dog
+        "pet_name": "",        # name of the animal
         "sex": "",             # male | female
         "age_years": None,     # integer — needed for blood-test rule (>6 years)
         "weight_kg": None,     # float — needed for female dogs only
@@ -190,6 +191,8 @@ def _next_missing_field(slots: dict) -> str | None:
         return "service"
     if not slots["species"]:
         return "species"
+    if not slots.get("pet_name"):
+        return "pet_name"
     if not slots["sex"]:
         return "sex"
     if slots["age_years"] is None:
@@ -205,30 +208,34 @@ def _next_missing_field(slots: dict) -> str | None:
 
 _QUESTIONS: dict[str, dict[str, str]] = {
     "en": {
-        "service":     "What service do you need? (1) Sterilisation/neutering  (2) Vaccination  (3) Microchip",
+        "service":     "What service do you need?\n(1) Sterilisation/neutering\n(2) Vaccination\n(3) Microchip",
         "species":     "Is your pet a cat or a dog?",
-        "sex":         "Is your pet male or female?",
-        "age_years":   "How old is your pet? (in years)",
-        "weight_kg":   "Since she is a female dog, I need her weight in kg. How much does she weigh?",
+        "pet_name":    "What's your pet's name?",
+        "sex":         "Is {pet_name} male or female?",
+        "age_years":   "How old is {pet_name}? (in years)",
+        "weight_kg":   "How much does {pet_name} weigh? (kg)",
         "owner_name":  "Almost there! Could I get your name to confirm the booking?",
         "owner_phone": "And your phone number or email so we can reach you?",
     },
     "es": {
         "service":     "¿Qué servicio necesitas?\n(1) Esterilización/castración\n(2) Vacunación\n(3) Microchip",
         "species":     "¿Tu mascota es gato o perro?",
-        "sex":         "¿Tu mascota es macho o hembra?",
-        "age_years":   "¿Cuántos años tiene tu mascota?",
-        "weight_kg":   "Al ser perra, necesito su peso en kg para calcular el tiempo quirúrgico. ¿Cuánto pesa?",
+        "pet_name":    "¿Cómo se llama tu mascota?",
+        "sex":         "¿{pet_name} es macho o hembra?",
+        "age_years":   "¿Cuántos años tiene {pet_name}?",
+        "weight_kg":   "¿Cuánto pesa {pet_name}? (kg)",
         "owner_name":  "¡Casi listo! ¿Me puedes dar tu nombre para confirmar la cita?",
         "owner_phone": "¿Y tu número de teléfono o email para contactarte?",
     },
 }
 
 
-def _question_for_field(field: str, lang: str = "en") -> str:
-    return _QUESTIONS.get(lang, _QUESTIONS["en"]).get(
+def _question_for_field(field: str, lang: str = "en", slots: dict | None = None) -> str:
+    template = _QUESTIONS.get(lang, _QUESTIONS["en"]).get(
         field, "Could you give me a bit more information?"
     )
+    pet_name = (slots or {}).get("pet_name") or ("your pet" if lang == "en" else "tu mascota")
+    return template.replace("{pet_name}", pet_name)
 
 
 _YES_RE = re.compile(
@@ -277,12 +284,16 @@ def _confirmation_card(slots: dict) -> str:
             "\n\n⚠️ *Mandatory pre-op blood test* — your pet is over 6 years old."
         )
 
+    pet_name = slots.get("pet_name", "")
+    pet_name_line = (f"\n🏷️ Nombre: {pet_name}" if es else f"\n🏷️ Name: {pet_name}") if pet_name else ""
+
     if es:
         return (
             "📋 *Confirmemos la cita*\n\n"
             f"👤 Nombre del dueño/a: {slots['owner_name']}\n"
             f"📞 Contacto: {slots['owner_phone']}\n"
             f"🐶 Animal: {species_label}"
+            f"{pet_name_line}"
             f"{age_line}"
             f"{weight_line}\n"
             f"💉 Servicio: Esterilización"
@@ -294,6 +305,7 @@ def _confirmation_card(slots: dict) -> str:
         f"👤 Owner: {slots['owner_name']}\n"
         f"📞 Contact: {slots['owner_phone']}\n"
         f"🐶 Animal: {species_label}"
+        f"{pet_name_line}"
         f"{age_line}"
         f"{weight_line}\n"
         f"💉 Service: Sterilisation"
@@ -394,7 +406,9 @@ def ask(user_msg: str, session_id: str = "default") -> str:
 
     # Capture free-text / numeric answers based on what was last asked.
     last_asked = slots.get("last_asked", "")
-    if last_asked == "service" and not slots["service"]:
+    if last_asked == "pet_name" and not slots.get("pet_name"):
+        slots["pet_name"] = user_msg.strip().capitalize()
+    elif last_asked == "service" and not slots["service"]:
         t = user_msg.strip().lower()
         if t in ("1", "esterilización", "esterilizacion", "castración", "castracion",
                  "sterilisation", "sterilization", "spay", "neuter"):
@@ -480,7 +494,7 @@ def ask(user_msg: str, session_id: str = "default") -> str:
         missing = _next_missing_field(slots)
         if missing:
             slots["last_asked"] = missing
-            return _question_for_field(missing, lang)
+            return _question_for_field(missing, lang, slots)
 
         # All data collected — show confirmation card before booking.
         slots["awaiting_confirm"] = True
