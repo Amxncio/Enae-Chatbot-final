@@ -157,7 +157,7 @@ Ejemplo breve:
 
 El proyecto se despliega como función serverless Python en Vercel.
 
-- **URL:** *(completar tras deploy)*
+- **URL:** [https://enae-chatbot-final.vercel.app](https://enae-chatbot-final.vercel.app)
 - **Env vars:** Configuradas solo en el panel de Vercel (Settings → Environment Variables).
 - **Build:** Automático al hacer push a `main`.
 

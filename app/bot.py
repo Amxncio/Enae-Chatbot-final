@@ -32,6 +32,41 @@ SCHEDULING_KEYWORDS = (
     "neuter",
 )
 
+HEAT_KEYWORDS = (
+    "in heat",
+    "en celo",
+    "in oestrus",
+    "in estrus",
+    "en calor",
+    "está en celo",
+    "esta en celo",
+    "currently in heat",
+    "is in heat",
+    "está en calor",
+)
+
+# Messages that are general info questions, not active booking requests.
+# When these patterns appear, bypass the slot flow and let the LLM answer.
+_INFO_BYPASS_PATTERNS = [
+    r"what time",
+    r"when can i pick",
+    r"when do i pick",
+    r"pick.?up",
+    r"\bcollect\b",
+    r"i need to speak",
+    r"speak with a human",
+    r"talk to",
+    r"transfer me",
+    r"\bhuman\b",
+    r"hablar con",
+    r"habla con",
+    r"persona humana",
+    r"recoger",
+    r"recogida",
+    r"a qué hora",
+    r"a que hora",
+]
+
 SERVICE_KEYWORDS = (
     "esteril",
     "castra",
@@ -60,6 +95,17 @@ def _get_slots(session_id: str) -> dict:
 def _detect_scheduling_intent(msg: str) -> bool:
     text = msg.lower()
     return any(k in text for k in SCHEDULING_KEYWORDS)
+
+
+def _detect_heat(msg: str) -> bool:
+    text = msg.lower()
+    return any(k in text for k in HEAT_KEYWORDS)
+
+
+def _is_info_question(msg: str) -> bool:
+    """True when the message is a general info question, not an active booking request."""
+    text = msg.lower()
+    return any(re.search(p, text) for p in _INFO_BYPASS_PATTERNS)
 
 
 def _extract_slots(msg: str, slots: dict) -> None:
@@ -197,10 +243,26 @@ def ask(user_msg: str, session_id: str = "default") -> str:
     slots = _get_slots(session_id)
     _extract_slots(user_msg, slots)
 
+    # Heat rejection: female dogs in heat cannot be booked — explain and reset flow.
+    is_dog_context = slots["species"] == "dog" or bool(
+        re.search(r"\b(dog|dogs|perro|perra|perros|perras)\b", user_msg.lower())
+    )
+    if is_dog_context and _detect_heat(user_msg):
+        _slot_store[session_id] = _default_slots()
+        return (
+            "I'm afraid we cannot schedule a sterilisation while your dog is in heat. "
+            "Female dogs must wait at least 2 months after the end of the heat cycle "
+            "before surgery (to avoid the risk of pseudopregnancy). "
+            "Feel free to contact us again when the time is right!"
+        )
+
     if _detect_scheduling_intent(user_msg):
         slots["in_flow"] = True
 
-    if slots["in_flow"]:
+    # General info questions bypass the slot flow even if in_flow is True.
+    if slots["in_flow"] and _is_info_question(user_msg):
+        pass  # fall through to the LLM path below
+    elif slots["in_flow"]:
         missing = _next_missing_field(slots)
         if missing:
             return _question_for_field(missing)
