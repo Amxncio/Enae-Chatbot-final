@@ -69,6 +69,7 @@ _INFO_BYPASS_PATTERNS = [
 
 SERVICE_KEYWORDS = (
     "esteril",
+    "steril",   # matches sterilisation / sterilization / sterilise / sterilize
     "castra",
     "spay",
     "neuter",
@@ -152,16 +153,16 @@ def _next_missing_field(slots: dict) -> str | None:
 def _question_for_field(field: str) -> str:
     if field == "service":
         return (
-            "Perfecto, te ayudo con la cita. "
-            "Para empezar, confirma el servicio: ¿quieres esterilizacion/castracion?"
+            "I'd be happy to help you book an appointment. "
+            "Could you confirm the service: sterilisation (spay/neuter)?"
         )
     if field == "species":
-        return "Gracias. ¿Tu mascota es gato o perro?"
+        return "Great. Is your pet a cat or a dog?"
     if field == "sex":
-        return "Entendido. ¿Es macho o hembra?"
+        return "Is your pet male or female?"
     if field == "weight_kg":
-        return "Al ser perra, necesito su peso en kg para calcular el tiempo quirurgico. ¿Cuanto pesa?"
-    return "¿Me puedes dar un poco mas de informacion?"
+        return "Since she is a female dog, I need her weight in kg to calculate the surgery duration. How much does she weigh?"
+    return "Could you give me a bit more information?"
 
 
 def _render_availability_reply(result_json: str) -> str:
