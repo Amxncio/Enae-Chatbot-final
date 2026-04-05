@@ -335,7 +335,7 @@ def _confirmation_card(slots: dict) -> str:
 
 
 def _render_booking_reply(result_json: str, slots: dict | None = None) -> str:
-    """Render the final booking confirmation message, including Calendly link if available."""
+    """Render the final booking confirmation message (GCal link omitted; errors still surfaced)."""
     try:
         data = json.loads(result_json)
     except json.JSONDecodeError:
@@ -358,20 +358,14 @@ def _render_booking_reply(result_json: str, slots: dict | None = None) -> str:
     duration    = data.get("surgery_duration_minutes", "")
     pet         = data.get("pet_name", "")
     owner       = data.get("owner_name", "")
-    gcal_link = data.get("gcal_event_link")
     gcal_err = (data.get("gcal_error") or "").strip()
 
     pet_ref = f" para {pet}" if pet else ""
     mode_note = " (calendario real)" if data.get("mode") == "real_calendly" else ""
 
+    # El evento se crea en GCal igualmente; no mostramos el enlace largo en el chat.
     gcal_line = ""
-    if gcal_link:
-        gcal_line = (
-            f"\n\n📅 **Ver en Google Calendar:** {gcal_link}"
-            if es else
-            f"\n\n📅 **View in Google Calendar:** {gcal_link}"
-        )
-    elif gcal_err:
+    if gcal_err:
         # Ayuda a depurar en Vercel (403 = permisos, JSON inválido = pegado mal en env)
         hint = gcal_err[:350] + ("…" if len(gcal_err) > 350 else "")
         gcal_line = (
