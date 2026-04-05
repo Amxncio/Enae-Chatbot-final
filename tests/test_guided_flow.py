@@ -19,38 +19,48 @@ def test_guided_flow_asks_missing_fields_in_order():
     bot._slot_store.pop(sid, None)
 
     r1 = bot.ask("Quiero una cita", sid)
-    assert "servicio" in r1.lower() or "esterilizacion" in r1.lower()
+    assert "servicio" in r1.lower() or "esteriliz" in r1.lower()
 
-    r2 = bot.ask("Si, esterilizacion", sid)
+    r2 = bot.ask("1", sid)
     assert "gato o perro" in r2.lower()
 
+    # "perra" infiere especie + sexo → siguiente paso es nombre de mascota
     r3 = bot.ask("Perra", sid)
-    assert "macho o hembra" in r3.lower()
+    assert "llama" in r3.lower() or "nombre" in r3.lower()
 
-    r4 = bot.ask("Hembra", sid)
-    assert "peso" in r4.lower()
+    r4 = bot.ask("Luna", sid)
+    assert "años" in r4.lower() or "cuántos" in r4.lower()
+
+    r5 = bot.ask("3 años", sid)
+    assert "peso" in r5.lower() or "kg" in r5.lower()
 
 
-def test_guided_flow_calls_tool_when_required_data_is_complete(monkeypatch):
+def test_guided_flow_calls_create_booking_on_confirm(monkeypatch):
     sid = "test-guided-complete"
     bot._slot_store.pop(sid, None)
 
-    class FakeTool:
+    class FakeCreateBooking:
         @staticmethod
         def invoke(payload):
             return (
-                '{"available": true, "mode": "real_calendly", "date": "2026-04-03", '
-                '"delivery_window": "09:00-10:30", "pickup_time": "approximately 12:00 (noon)", '
-                '"surgery_duration_minutes": 45}'
+                '{"booked": true, "mode": "mock_fallback", "date": "2026-04-03", '
+                '"day_of_week": "Thursday", "delivery_window": "09:00–10:30", '
+                '"pickup_time": "approximately 12:00 (noon)", '
+                '"surgery_duration_minutes": 45, "gcal_event_link": null}'
             )
 
-    monkeypatch.setattr(bot, "check_availability", FakeTool())
+    monkeypatch.setattr(bot, "create_booking", FakeCreateBooking())
 
+    # Gato macho: sin peso; flujo hasta tarjeta + sí → create_booking
     bot.ask("Quiero una cita", sid)
-    bot.ask("Esterilizacion", sid)
-    bot.ask("Perra", sid)
-    bot.ask("Hembra", sid)
-    final = bot.ask("12 kg", sid)
+    bot.ask("1", sid)
+    bot.ask("gato", sid)
+    bot.ask("Miau", sid)
+    bot.ask("macho", sid)
+    bot.ask("2 años", sid)
+    bot.ask("Ana Test", sid)
+    bot.ask("600000000", sid)
+    final = bot.ask("sí", sid)
 
     assert "2026-04-03" in final
     assert "45" in final
