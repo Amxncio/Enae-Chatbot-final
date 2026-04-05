@@ -247,3 +247,5 @@ Tests mínimos de disponibilidad y flujo guiado:
 ```bash
 python -m pytest -q
 ```
+
+**Evidencia de entrega (ENAE):** checklist en [`docs/final_evidence_checklist.md`](docs/final_evidence_checklist.md); guion y comando de transcripción en [`docs/acceptance_conversations.md`](docs/acceptance_conversations.md) y `scripts/capture_acceptance_transcript.py`.
