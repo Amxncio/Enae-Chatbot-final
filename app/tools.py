@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import zoneinfo
 from datetime import date, datetime, time, timedelta, timezone
 
 import requests
@@ -37,6 +38,24 @@ PICKUP_TIMES = {
 
 MAX_DAILY_MINUTES = 240
 MAX_DOGS_PER_DAY = 2
+
+CLINIC_TZ = zoneinfo.ZoneInfo("Europe/Madrid")
+
+# Hour at which each species' delivery window opens.
+# If the current local time is at or past this hour, today's slot is already gone.
+_DELIVERY_CUTOFF_HOUR = {
+    "cat": 8,   # cats: 08:00–09:00
+    "dog": 9,   # dogs: 09:00–10:30
+}
+
+
+def _earliest_bookable_date(species: str) -> date:
+    """Return today if the delivery window hasn't opened yet, otherwise tomorrow."""
+    now = datetime.now(CLINIC_TZ)
+    cutoff = _DELIVERY_CUTOFF_HOUR.get(species.lower(), 9)
+    if now.hour >= cutoff:
+        return now.date() + timedelta(days=1)
+    return now.date()
 
 
 def _build_mock_schedule() -> dict[str, dict]:
@@ -192,10 +211,12 @@ def check_availability(
 
     surgery_min = _get_surgery_minutes(sp, sx, weight_kg)
 
-    start = date.today()
+    start = _earliest_bookable_date(sp)
     if preferred_date:
         try:
-            start = date.fromisoformat(preferred_date)
+            requested = date.fromisoformat(preferred_date)
+            # Never go back in time: use whichever is later
+            start = max(start, requested)
         except ValueError:
             pass
 
