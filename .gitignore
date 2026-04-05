@@ -13,3 +13,7 @@ Thumbs.db
 *.log
 .vercel
 node_modules/
+
+# Google Cloud service account keys (never commit)
+docs/molten-reach-485011-b2-3bbf6b15204e.json
+docs/*service-account*.json
