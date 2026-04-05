@@ -26,7 +26,7 @@ Chatbot conversacional que **reduce el tiempo y la fricción** al coordinar cita
 | Vercel | +1 | Done | Deploy funcional, env vars en panel |
 | Jira | +1 | Done | Board con tickets VET-1…VET-14, 3 EPICs |
 | RAG (URL oficial) | +1 | Done | Pipeline BM25 desde la URL oficial de instrucciones preoperatorias |
-| Tool disponibilidad | +1 | Done | Mock con algoritmo Tetris (240 min, máx 2 perros, ventanas) |
+| Tool disponibilidad | +1 | Done | Algoritmo Tetris (240 min, máx 2 perros, ventanas) + integración real Calendly con fallback mock |
 | Intents | +1 | Done | 20 intents + mapa a conv. 1–10 |
 
 ---
@@ -139,17 +139,18 @@ El bot ahora sigue un flujo estricto por pasos para evitar respuestas prematuras
 
 Solo cuando los datos obligatorios estan completos consulta `check_availability`.
 Si falta algo, pregunta un unico dato por turno y reutiliza memoria de la sesion para no repetir preguntas.
+Las preguntas informativas (hora de recogida, instrucciones, handoff a humano) se responden directamente aunque haya un flujo de cita activo.
 
 Ejemplo breve:
 
-- Usuario: "Quiero una cita"
-- Bot: "¿Quieres esterilizacion/castracion?"
-- Usuario: "Si, para una perra"
-- Bot: "¿Es macho o hembra?"
-- Usuario: "Hembra"
-- Bot: "¿Cuanto pesa en kg?"
-- Usuario: "12 kg"
-- Bot: devuelve disponibilidad con ventana de entrega + ayuno + recogida.
+- User: "I need an appointment for sterilisation of my dog."
+- Bot: "Is your pet male or female?"
+- User: "Female."
+- Bot: "Since she is a female dog, I need her weight in kg. How much does she weigh?"
+- User: "14 kg"
+- Bot: devuelve disponibilidad con ventana de entrega + duración quirúrgica + hora de recogida + instrucciones de ayuno.
+
+**Rechazo automático en celo:** si el usuario menciona que la perra está en celo, el bot niega la cita y explica que debe esperar 2 meses tras el fin del ciclo (riesgo de pseudogestación). Los gatos sí pueden operarse en celo.
 
 ---
 
