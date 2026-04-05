@@ -12,7 +12,7 @@ from langchain_groq import ChatGroq
 from app.config import GROQ_API_KEY, GROQ_MODEL
 from app.prompt import SYSTEM_PROMPT
 from app.rag import retrieve
-from app.tools import check_availability
+from app.tools import check_availability, create_booking
 
 _store: dict[str, InMemoryChatMessageHistory] = {}
 _slot_store: dict[str, dict] = {}
@@ -314,6 +314,68 @@ def _confirmation_card(slots: dict) -> str:
     )
 
 
+def _render_booking_reply(result_json: str, slots: dict | None = None) -> str:
+    """Render the final booking confirmation message, including Calendly link if available."""
+    try:
+        data = json.loads(result_json)
+    except json.JSONDecodeError:
+        return "Hubo un problema al registrar la cita. Por favor llama a la clínica."
+
+    es = (slots or {}).get("lang") == "es"
+
+    if not data.get("booked"):
+        msg = data.get("message", "")
+        return (
+            f"Lo sentimos, no hay hueco disponible en los próximos días. {msg} Por favor llama a la clínica."
+            if es else
+            f"Sorry, no slots available in the coming days. {msg} Please call the clinic."
+        )
+
+    appt_date   = data.get("date", "")
+    day_of_week = data.get("day_of_week", "")
+    delivery    = data.get("delivery_window", "")
+    pickup      = data.get("pickup_time", "")
+    duration    = data.get("surgery_duration_minutes", "")
+    pet         = data.get("pet_name", "")
+    owner       = data.get("owner_name", "")
+    booking_url = data.get("calendly_booking_url")
+
+    pet_ref = f" para {pet}" if pet else ""
+    mode_note = " (calendario real)" if data.get("mode") == "real_calendly" else ""
+
+    calendly_line = ""
+    if booking_url:
+        calendly_line = (
+            f"\n\n📅 **Completa la reserva en Calendly:** {booking_url}"
+            if es else
+            f"\n\n📅 **Finalise your booking on Calendly:** {booking_url}"
+        )
+
+    if es:
+        return (
+            f"✅ ¡Cita registrada{pet_ref}{mode_note}!\n\n"
+            f"📆 Fecha: {day_of_week} {appt_date}\n"
+            f"🚗 Entrega: {delivery}\n"
+            f"🏠 Recogida: {pickup}\n"
+            f"⏱️ Duración cirugía: {duration} min\n"
+            f"👤 Titular: {owner}\n\n"
+            "🍽️ Recuerda el ayuno de 8–12 h (agua hasta 1–2 h antes) y trae el "
+            "consentimiento firmado y la documentación del animal."
+            f"{calendly_line}"
+        )
+    return (
+        f"✅ Appointment confirmed{pet_ref}{mode_note}!\n\n"
+        f"📆 Date: {day_of_week} {appt_date}\n"
+        f"🚗 Drop-off window: {delivery}\n"
+        f"🏠 Pick-up: {pickup}\n"
+        f"⏱️ Surgery duration: {duration} min\n"
+        f"👤 Owner: {owner}\n\n"
+        "🍽️ Remember: fast 8–12 h before surgery (water OK until 1–2 h before). "
+        "Bring signed consent form and animal documentation."
+        f"{calendly_line}"
+    )
+
+
 def _render_availability_reply(result_json: str, slots: dict | None = None) -> str:
     try:
         data = json.loads(result_json)
@@ -473,17 +535,20 @@ def ask(user_msg: str, session_id: str = "default") -> str:
             )
         if _is_affirmative(user_msg):
             slots["awaiting_confirm"] = False
-            result = check_availability.invoke(
+            result = create_booking.invoke(
                 {
                     "species": slots["species"],
                     "sex": slots["sex"],
                     "weight_kg": float(slots["weight_kg"] or 0),
                     "preferred_date": slots["preferred_date"],
+                    "owner_name": slots.get("owner_name", ""),
+                    "owner_phone": slots.get("owner_phone", ""),
+                    "pet_name": slots.get("pet_name", ""),
                 }
             )
             slots["in_flow"] = False
             slots["last_asked"] = ""
-            return _render_availability_reply(result, slots)
+            return _render_booking_reply(result, slots)
         # Unrecognised response — ask again.
         return (
             "¿Confirmas la cita? Responde *sí* o *no*."

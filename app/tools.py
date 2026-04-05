@@ -187,6 +187,42 @@ def _first_operational_calendly_slot(species: str, from_day: date) -> dict | Non
     return None
 
 
+def _create_calendly_scheduling_link(event_type_uri: str) -> str | None:
+    """Create a one-time Calendly scheduling link via POST /scheduling_links.
+
+    Returns the booking_url or None if creation fails.
+    """
+    if not CALENDLY_TOKEN or not event_type_uri:
+        return None
+    try:
+        resp = requests.post(
+            "https://api.calendly.com/scheduling_links",
+            headers={
+                "Authorization": f"Bearer {CALENDLY_TOKEN}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "max_event_count": 1,
+                "owner": event_type_uri,
+                "owner_type": "EventType",
+            },
+            timeout=15,
+        )
+        resp.raise_for_status()
+        return resp.json().get("resource", {}).get("booking_url")
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _register_booking_in_mock(booked_date: date, species: str, surgery_minutes: int) -> None:
+    """Mark the slot as booked in the local mock schedule (Tetris state)."""
+    key = booked_date.isoformat()
+    day = _mock_schedule.setdefault(key, {"minutes_used": 0, "dogs": 0})
+    day["minutes_used"] += surgery_minutes
+    if species.lower() == "dog":
+        day["dogs"] += 1
+
+
 @tool
 def check_availability(
     species: str,
@@ -282,3 +318,89 @@ def check_availability(
         response["note"] = "No Calendly slot found in window; using mock availability."
 
     return json.dumps(response)
+
+
+@tool
+def create_booking(
+    species: str,
+    sex: str,
+    weight_kg: float = 0.0,
+    preferred_date: str = "",
+    owner_name: str = "",
+    owner_phone: str = "",
+    pet_name: str = "",
+) -> str:
+    """Confirm and register a sterilisation appointment.
+
+    Finds the best available date (Tetris rules + Calendly), marks it as
+    booked in the local schedule, creates a one-time Calendly scheduling
+    link so the owner can finalise the appointment on the calendar, and
+    returns a full booking confirmation payload.
+    """
+    sp = species.lower().strip()
+    sx = sex.lower().strip()
+
+    if sp not in ("cat", "dog"):
+        return json.dumps({"error": "Species must be 'cat' or 'dog'."})
+    if sx not in ("male", "female"):
+        return json.dumps({"error": "Sex must be 'male' or 'female'."})
+    if sp == "dog" and sx == "female" and weight_kg <= 0:
+        return json.dumps({"error": "Weight in kg is required for female dogs."})
+
+    surgery_min = _get_surgery_minutes(sp, sx, weight_kg)
+    start = _earliest_bookable_date(sp)
+    if preferred_date:
+        try:
+            requested = date.fromisoformat(preferred_date)
+            start = max(start, requested)
+        except ValueError:
+            pass
+
+    # Tetris validation
+    booked_date = _find_available_date(sp, surgery_min, start)
+    if booked_date is None:
+        return json.dumps({
+            "booked": False,
+            "message": "No available slots in the next 14 days. Please call the clinic.",
+        })
+
+    # Try to get exact Calendly slot for the date
+    event_type_uri = _calendly_event_type_for_species(sp)
+    calendly_slot = None
+    if CALENDLY_TOKEN and event_type_uri:
+        try:
+            calendly_slot = _first_operational_calendly_slot(sp, booked_date)
+        except Exception:  # noqa: BLE001
+            pass
+
+    real_date = booked_date
+    if calendly_slot:
+        slot_dt = datetime.fromisoformat(
+            calendly_slot["start_time"].replace("Z", "+00:00")
+        )
+        real_date = slot_dt.date()
+
+    # Register in local mock schedule so Tetris stays consistent
+    _register_booking_in_mock(real_date, sp, surgery_min)
+
+    # Create one-time Calendly scheduling link for the owner to finalise
+    booking_url = _create_calendly_scheduling_link(event_type_uri) if event_type_uri else None
+
+    window = DELIVERY_WINDOWS[sp]
+    pickup = PICKUP_TIMES[sp]
+
+    return json.dumps({
+        "booked": True,
+        "mode": "real_calendly" if calendly_slot else "mock_fallback",
+        "date": real_date.isoformat(),
+        "day_of_week": real_date.strftime("%A"),
+        "surgery_duration_minutes": surgery_min,
+        "delivery_window": window,
+        "pickup_time": pickup,
+        "fasting_instructions": "Last meal 8-12 hours before surgery. Water allowed until 1-2 hours before.",
+        "reminder": "Bring signed consent form and animal documentation (European passport or health card).",
+        "owner_name": owner_name,
+        "owner_phone": owner_phone,
+        "pet_name": pet_name,
+        "calendly_booking_url": booking_url,
+    })
