@@ -259,6 +259,9 @@ def ask(user_msg: str, session_id: str = "default") -> str:
 
     if _detect_scheduling_intent(user_msg):
         slots["in_flow"] = True
+        # This clinic only does sterilisation — auto-fill service so we never ask for it.
+        if not slots["service"]:
+            slots["service"] = "sterilisation"
 
     # General info questions bypass the slot flow even if in_flow is True.
     if slots["in_flow"] and _is_info_question(user_msg):
