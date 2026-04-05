@@ -69,26 +69,32 @@ _INFO_BYPASS_PATTERNS = [
 
 SERVICE_KEYWORDS = (
     "esteril",
-    "steril",   # matches sterilisation / sterilization / sterilise / sterilize
+    "steril",
     "castra",
     "spay",
     "neuter",
+    "vacun",
+    "vaccination",
+    "vaccine",
+    "microchip",
+    "chip",
 )
 
 
 def _default_slots() -> dict:
     return {
         "in_flow": False,
-        "service": "",
-        "species": "",
-        "sex": "",
-        "weight_kg": None,
+        "service": "",         # sterilisation | vaccination | microchip
+        "species": "",         # cat | dog
+        "sex": "",             # male | female
+        "age_years": None,     # integer — needed for blood-test rule (>6 years)
+        "weight_kg": None,     # float — needed for female dogs only
         "preferred_date": "",
         "owner_name": "",
         "owner_phone": "",
         "last_asked": "",
-        "lang": "",              # detected on first Spanish/English message; persists for session
-        "awaiting_confirm": False,  # True when confirmation card has been shown
+        "lang": "",
+        "awaiting_confirm": False,
     }
 
 
@@ -129,7 +135,12 @@ def _detect_lang(msg: str) -> str:
 def _extract_slots(msg: str, slots: dict) -> None:
     text = msg.lower()
 
-    if any(k in text for k in SERVICE_KEYWORDS):
+    # Service detection — explicit keywords take priority over auto-fill
+    if re.search(r"\b(vacun|vaccination|vaccine|vacuna)\w*", text):
+        slots["service"] = "vaccination"
+    elif re.search(r"\b(microchip|chip)\b", text):
+        slots["service"] = "microchip"
+    elif any(k in text for k in ("esteril", "steril", "castra", "spay", "neuter")):
         slots["service"] = "sterilisation"
 
     if re.search(r"\b(cat|cats|gato|gata|gatos|gatas)\b", text):
@@ -141,13 +152,27 @@ def _extract_slots(msg: str, slots: dict) -> None:
         slots["sex"] = "male"
     elif re.search(r"\b(female|hembra)\b", text):
         slots["sex"] = "female"
-    # Gendered species words also imply sex: perra/gata → female
+    # Gendered species words also imply sex
     if re.search(r"\b(perra|perras)\b", text):
         slots["sex"] = "female"
     if re.search(r"\b(gata|gatas)\b", text):
         slots["sex"] = "female"
 
-    weight_match = re.search(r"\b(\d{1,3}(?:[.,]\d{1,2})?)\s?(kg|kgs|kilos?)\b", text)
+    # Age extraction: "3 años", "3 years", "3 years old", "tiene 3", "aged 3"
+    age_match = re.search(
+        r"\b(\d{1,2})\s*(?:años?|years?(?:\s+old)?)\b"
+        r"|\b(?:tiene|aged?|has)\s+(\d{1,2})\b",
+        text,
+    )
+    if age_match:
+        raw_age = age_match.group(1) or age_match.group(2)
+        try:
+            slots["age_years"] = int(raw_age)
+        except (ValueError, TypeError):
+            pass
+
+    # Weight: kg only (not shared with age)
+    weight_match = re.search(r"\b(\d{1,3}(?:[.,]\d{1,2})?)\s*(?:kg|kgs|kilos?)\b", text)
     if weight_match:
         raw = weight_match.group(1).replace(",", ".")
         try:
@@ -161,10 +186,14 @@ def _extract_slots(msg: str, slots: dict) -> None:
 
 
 def _next_missing_field(slots: dict) -> str | None:
+    if not slots["service"]:
+        return "service"
     if not slots["species"]:
         return "species"
     if not slots["sex"]:
         return "sex"
+    if slots["age_years"] is None:
+        return "age_years"
     if slots["species"] == "dog" and slots["sex"] == "female" and not slots["weight_kg"]:
         return "weight_kg"
     if not slots.get("owner_name"):
@@ -176,15 +205,19 @@ def _next_missing_field(slots: dict) -> str | None:
 
 _QUESTIONS: dict[str, dict[str, str]] = {
     "en": {
+        "service":     "What service do you need? (1) Sterilisation/neutering  (2) Vaccination  (3) Microchip",
         "species":     "Is your pet a cat or a dog?",
         "sex":         "Is your pet male or female?",
+        "age_years":   "How old is your pet? (in years)",
         "weight_kg":   "Since she is a female dog, I need her weight in kg. How much does she weigh?",
         "owner_name":  "Almost there! Could I get your name to confirm the booking?",
         "owner_phone": "And your phone number or email so we can reach you?",
     },
     "es": {
+        "service":     "¿Qué servicio necesitas?\n(1) Esterilización/castración\n(2) Vacunación\n(3) Microchip",
         "species":     "¿Tu mascota es gato o perro?",
         "sex":         "¿Tu mascota es macho o hembra?",
+        "age_years":   "¿Cuántos años tiene tu mascota?",
         "weight_kg":   "Al ser perra, necesito su peso en kg para calcular el tiempo quirúrgico. ¿Cuánto pesa?",
         "owner_name":  "¡Casi listo! ¿Me puedes dar tu nombre para confirmar la cita?",
         "owner_phone": "¿Y tu número de teléfono o email para contactarte?",
@@ -217,29 +250,43 @@ def _is_negative(msg: str) -> bool:
 
 
 def _confirmation_card(slots: dict) -> str:
+    es = slots["lang"] == "es"
+
     species_label = {
-        ("cat", "male"):   "Gato (macho)"   if slots["lang"] == "es" else "Cat (male)",
-        ("cat", "female"): "Gata (hembra)"  if slots["lang"] == "es" else "Cat (female)",
-        ("dog", "male"):   "Perro (macho)"  if slots["lang"] == "es" else "Dog (male)",
-        ("dog", "female"): "Perra (hembra)" if slots["lang"] == "es" else "Dog (female)",
+        ("cat", "male"):   "Gato (macho)"   if es else "Cat (male)",
+        ("cat", "female"): "Gata (hembra)"  if es else "Cat (female)",
+        ("dog", "male"):   "Perro (macho)"  if es else "Dog (male)",
+        ("dog", "female"): "Perra (hembra)" if es else "Dog (female)",
     }.get((slots["species"], slots["sex"]), slots["species"])
+
+    age = slots.get("age_years")
+    age_line = (f"\n🎂 Edad: {age} años" if es else f"\n🎂 Age: {age} years") if age else ""
 
     weight_line = ""
     if slots["weight_kg"]:
         weight_line = (
-            f"\n🐾 Peso: {slots['weight_kg']} kg"
-            if slots["lang"] == "es"
-            else f"\n🐾 Weight: {slots['weight_kg']} kg"
+            f"\n⚖️ Peso: {slots['weight_kg']} kg"
+            if es else f"\n⚖️ Weight: {slots['weight_kg']} kg"
         )
 
-    if slots["lang"] == "es":
+    blood_test_warning = ""
+    if age and age > 6:
+        blood_test_warning = (
+            "\n\n⚠️ *Analítica preoperatoria obligatoria* — tu mascota tiene más de 6 años."
+            if es else
+            "\n\n⚠️ *Mandatory pre-op blood test* — your pet is over 6 years old."
+        )
+
+    if es:
         return (
             "📋 *Confirmemos la cita*\n\n"
             f"👤 Nombre del dueño/a: {slots['owner_name']}\n"
             f"📞 Contacto: {slots['owner_phone']}\n"
             f"🐶 Animal: {species_label}"
+            f"{age_line}"
             f"{weight_line}\n"
-            f"💉 Servicio: Esterilización\n\n"
+            f"💉 Servicio: Esterilización"
+            f"{blood_test_warning}\n\n"
             "¿Quieres confirmar la cita? (sí / no)"
         )
     return (
@@ -247,8 +294,10 @@ def _confirmation_card(slots: dict) -> str:
         f"👤 Owner: {slots['owner_name']}\n"
         f"📞 Contact: {slots['owner_phone']}\n"
         f"🐶 Animal: {species_label}"
+        f"{age_line}"
         f"{weight_line}\n"
-        f"💉 Service: Sterilisation\n\n"
+        f"💉 Service: Sterilisation"
+        f"{blood_test_warning}\n\n"
         "Shall I confirm this appointment? (yes / no)"
     )
 
@@ -343,9 +392,25 @@ def ask(user_msg: str, session_id: str = "default") -> str:
         slots["lang"] = detected
     lang = slots["lang"]
 
-    # Capture free-text answers for owner_name / owner_phone based on what was last asked.
+    # Capture free-text / numeric answers based on what was last asked.
     last_asked = slots.get("last_asked", "")
-    if last_asked == "owner_name" and not slots["owner_name"]:
+    if last_asked == "service" and not slots["service"]:
+        t = user_msg.strip().lower()
+        if t in ("1", "esterilización", "esterilizacion", "castración", "castracion",
+                 "sterilisation", "sterilization", "spay", "neuter"):
+            slots["service"] = "sterilisation"
+        elif t in ("2", "vacunación", "vacunacion", "vaccination", "vaccine", "vacuna"):
+            slots["service"] = "vaccination"
+        elif t in ("3", "microchip", "chip"):
+            slots["service"] = "microchip"
+    elif last_asked == "age_years" and slots["age_years"] is None:
+        age_match = re.search(r"\b(\d{1,2})\b", user_msg)
+        if age_match:
+            try:
+                slots["age_years"] = int(age_match.group(1))
+            except ValueError:
+                pass
+    elif last_asked == "owner_name" and not slots["owner_name"]:
         slots["owner_name"] = user_msg.strip()
     elif last_asked == "owner_phone" and not slots["owner_phone"]:
         slots["owner_phone"] = user_msg.strip()
@@ -373,9 +438,12 @@ def ask(user_msg: str, session_id: str = "default") -> str:
 
     if _detect_scheduling_intent(user_msg):
         slots["in_flow"] = True
-        # This clinic only does sterilisation — auto-fill service so we never ask for it.
-        if not slots["service"]:
-            slots["service"] = "sterilisation"
+
+    # If service was resolved to a non-sterilisation option, exit slot flow and
+    # let the LLM handle it (vaccination / microchip are simpler, no Tetris needed).
+    if slots["in_flow"] and slots["service"] in ("vaccination", "microchip"):
+        slots["in_flow"] = False
+        slots["awaiting_confirm"] = False
 
     # General info questions bypass the slot flow even if in_flow is True.
     if slots["in_flow"] and _is_info_question(user_msg):
