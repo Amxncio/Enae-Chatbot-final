@@ -87,7 +87,8 @@ def _default_slots() -> dict:
         "owner_name": "",
         "owner_phone": "",
         "last_asked": "",
-        "lang": "",        # detected on first Spanish/English message; persists for session
+        "lang": "",              # detected on first Spanish/English message; persists for session
+        "awaiting_confirm": False,  # True when confirmation card has been shown
     }
 
 
@@ -194,6 +195,61 @@ _QUESTIONS: dict[str, dict[str, str]] = {
 def _question_for_field(field: str, lang: str = "en") -> str:
     return _QUESTIONS.get(lang, _QUESTIONS["en"]).get(
         field, "Could you give me a bit more information?"
+    )
+
+
+_YES_RE = re.compile(
+    r"\b(yes|sí|si|confirm|confirmar|confirmo|ok|dale|adelante|correcto|claro|proceed)\b",
+    re.IGNORECASE,
+)
+_NO_RE = re.compile(
+    r"\b(no|nope|cancel|cancelar|cancelo|negativo)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_affirmative(msg: str) -> bool:
+    return bool(_YES_RE.search(msg))
+
+
+def _is_negative(msg: str) -> bool:
+    return bool(_NO_RE.search(msg))
+
+
+def _confirmation_card(slots: dict) -> str:
+    species_label = {
+        ("cat", "male"):   "Gato (macho)"   if slots["lang"] == "es" else "Cat (male)",
+        ("cat", "female"): "Gata (hembra)"  if slots["lang"] == "es" else "Cat (female)",
+        ("dog", "male"):   "Perro (macho)"  if slots["lang"] == "es" else "Dog (male)",
+        ("dog", "female"): "Perra (hembra)" if slots["lang"] == "es" else "Dog (female)",
+    }.get((slots["species"], slots["sex"]), slots["species"])
+
+    weight_line = ""
+    if slots["weight_kg"]:
+        weight_line = (
+            f"\n🐾 Peso: {slots['weight_kg']} kg"
+            if slots["lang"] == "es"
+            else f"\n🐾 Weight: {slots['weight_kg']} kg"
+        )
+
+    if slots["lang"] == "es":
+        return (
+            "📋 *Confirmemos la cita*\n\n"
+            f"👤 Nombre del dueño/a: {slots['owner_name']}\n"
+            f"📞 Contacto: {slots['owner_phone']}\n"
+            f"🐶 Animal: {species_label}"
+            f"{weight_line}\n"
+            f"💉 Servicio: Esterilización\n\n"
+            "¿Quieres confirmar la cita? (sí / no)"
+        )
+    return (
+        "📋 *Appointment Summary*\n\n"
+        f"👤 Owner: {slots['owner_name']}\n"
+        f"📞 Contact: {slots['owner_phone']}\n"
+        f"🐶 Animal: {species_label}"
+        f"{weight_line}\n"
+        f"💉 Service: Sterilisation\n\n"
+        "Shall I confirm this appointment? (yes / no)"
     )
 
 
@@ -324,23 +380,44 @@ def ask(user_msg: str, session_id: str = "default") -> str:
     # General info questions bypass the slot flow even if in_flow is True.
     if slots["in_flow"] and _is_info_question(user_msg):
         pass  # fall through to the LLM path below
+    elif slots.get("awaiting_confirm"):
+        # User has seen the confirmation card — wait for yes/no.
+        if _is_negative(user_msg):
+            _slot_store[session_id] = _default_slots()
+            return (
+                "De acuerdo, cita cancelada. ¡Cuando quieras la retomamos!"
+                if lang == "es"
+                else "No problem — booking cancelled. Come back whenever you're ready!"
+            )
+        if _is_affirmative(user_msg):
+            slots["awaiting_confirm"] = False
+            result = check_availability.invoke(
+                {
+                    "species": slots["species"],
+                    "sex": slots["sex"],
+                    "weight_kg": float(slots["weight_kg"] or 0),
+                    "preferred_date": slots["preferred_date"],
+                }
+            )
+            slots["in_flow"] = False
+            slots["last_asked"] = ""
+            return _render_availability_reply(result, slots)
+        # Unrecognised response — ask again.
+        return (
+            "¿Confirmas la cita? Responde *sí* o *no*."
+            if lang == "es"
+            else "Please reply *yes* to confirm or *no* to cancel."
+        )
     elif slots["in_flow"]:
         missing = _next_missing_field(slots)
         if missing:
             slots["last_asked"] = missing
             return _question_for_field(missing, lang)
 
-        result = check_availability.invoke(
-            {
-                "species": slots["species"],
-                "sex": slots["sex"],
-                "weight_kg": float(slots["weight_kg"] or 0),
-                "preferred_date": slots["preferred_date"],
-            }
-        )
+        # All data collected — show confirmation card before booking.
+        slots["awaiting_confirm"] = True
         slots["in_flow"] = False
-        slots["last_asked"] = ""
-        return _render_availability_reply(result, slots)
+        return _confirmation_card(slots)
 
     chain = _get_chain()
     if chain is None:
