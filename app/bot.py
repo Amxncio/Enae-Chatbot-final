@@ -338,17 +338,17 @@ def _render_booking_reply(result_json: str, slots: dict | None = None) -> str:
     duration    = data.get("surgery_duration_minutes", "")
     pet         = data.get("pet_name", "")
     owner       = data.get("owner_name", "")
-    booking_url = data.get("calendly_booking_url")
+    gcal_link = data.get("gcal_event_link")
 
     pet_ref = f" para {pet}" if pet else ""
     mode_note = " (calendario real)" if data.get("mode") == "real_calendly" else ""
 
-    calendly_line = ""
-    if booking_url:
-        calendly_line = (
-            f"\n\n📅 **Completa la reserva en Calendly:** {booking_url}"
+    gcal_line = ""
+    if gcal_link:
+        gcal_line = (
+            f"\n\n📅 **Ver en Google Calendar:** {gcal_link}"
             if es else
-            f"\n\n📅 **Finalise your booking on Calendly:** {booking_url}"
+            f"\n\n📅 **View in Google Calendar:** {gcal_link}"
         )
 
     if es:
@@ -361,7 +361,7 @@ def _render_booking_reply(result_json: str, slots: dict | None = None) -> str:
             f"👤 Titular: {owner}\n\n"
             "🍽️ Recuerda el ayuno de 8–12 h (agua hasta 1–2 h antes) y trae el "
             "consentimiento firmado y la documentación del animal."
-            f"{calendly_line}"
+            f"{gcal_line}"
         )
     return (
         f"✅ Appointment confirmed{pet_ref}{mode_note}!\n\n"
@@ -372,7 +372,7 @@ def _render_booking_reply(result_json: str, slots: dict | None = None) -> str:
         f"👤 Owner: {owner}\n\n"
         "🍽️ Remember: fast 8–12 h before surgery (water OK until 1–2 h before). "
         "Bring signed consent form and animal documentation."
-        f"{calendly_line}"
+        f"{gcal_line}"
     )
 
 

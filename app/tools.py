@@ -1,4 +1,4 @@
-"""Availability tool — Tetris rules + optional real Calendly availability (VET-13)."""
+"""Availability tool — Tetris rules + Calendly availability check + Google Calendar booking."""
 
 from __future__ import annotations
 
@@ -13,6 +13,8 @@ from app.config import (
     CALENDLY_EVENT_TYPE_CAT_URI,
     CALENDLY_EVENT_TYPE_DOG_URI,
     CALENDLY_TOKEN,
+    GOOGLE_CALENDAR_ID,
+    GOOGLE_SERVICE_ACCOUNT_JSON,
 )
 
 SURGERY_TIMES: dict[tuple[str, str, str], int] = {
@@ -187,29 +189,64 @@ def _first_operational_calendly_slot(species: str, from_day: date) -> dict | Non
     return None
 
 
-def _create_calendly_scheduling_link(event_type_uri: str) -> str | None:
-    """Create a one-time Calendly scheduling link via POST /scheduling_links.
+def _create_google_calendar_event(
+    booked_date: date,
+    species: str,
+    surgery_minutes: int,
+    pet_name: str,
+    owner_name: str,
+    owner_phone: str,
+) -> str | None:
+    """Create a Google Calendar event for the confirmed appointment.
 
-    Returns the booking_url or None if creation fails.
+    Returns the event htmlLink on success, None on failure or missing config.
     """
-    if not CALENDLY_TOKEN or not event_type_uri:
+    if not GOOGLE_SERVICE_ACCOUNT_JSON or not GOOGLE_CALENDAR_ID:
         return None
     try:
-        resp = requests.post(
-            "https://api.calendly.com/scheduling_links",
-            headers={
-                "Authorization": f"Bearer {CALENDLY_TOKEN}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "max_event_count": 1,
-                "owner": event_type_uri,
-                "owner_type": "EventType",
-            },
-            timeout=15,
+        import json as _json
+
+        from google.oauth2 import service_account
+        from googleapiclient.discovery import build
+
+        creds_info = _json.loads(GOOGLE_SERVICE_ACCOUNT_JSON)
+        creds = service_account.Credentials.from_service_account_info(
+            creds_info,
+            scopes=["https://www.googleapis.com/auth/calendar"],
         )
-        resp.raise_for_status()
-        return resp.json().get("resource", {}).get("booking_url")
+        service = build("calendar", "v3", credentials=creds, cache_discovery=False)
+
+        # Delivery window start = beginning of the species drop-off window
+        delivery_hour = 8 if species.lower() == "cat" else 9
+        start_dt = datetime.combine(
+            booked_date, time(delivery_hour, 0), tzinfo=CLINIC_TZ
+        )
+        end_dt = start_dt + timedelta(minutes=surgery_minutes)
+
+        label = pet_name if pet_name else species.capitalize()
+        event_body = {
+            "summary": f"Esterilización — {label} — {owner_name}",
+            "description": (
+                f"Dueño/a: {owner_name}\n"
+                f"Contacto: {owner_phone}\n"
+                f"Especie: {species} | Duración cirugía: {surgery_minutes} min\n"
+                "Ayuno: 8–12 h antes (agua hasta 1–2 h antes)\n"
+                "Traer consentimiento firmado y documentación del animal."
+            ),
+            "start": {"dateTime": start_dt.isoformat(), "timeZone": "Europe/Madrid"},
+            "end":   {"dateTime": end_dt.isoformat(),   "timeZone": "Europe/Madrid"},
+            "reminders": {
+                "useDefault": False,
+                "overrides": [
+                    {"method": "email",  "minutes": 24 * 60},
+                    {"method": "popup",  "minutes": 60},
+                ],
+            },
+        }
+        created = service.events().insert(
+            calendarId=GOOGLE_CALENDAR_ID, body=event_body
+        ).execute()
+        return created.get("htmlLink")
     except Exception:  # noqa: BLE001
         return None
 
@@ -383,8 +420,15 @@ def create_booking(
     # Register in local mock schedule so Tetris stays consistent
     _register_booking_in_mock(real_date, sp, surgery_min)
 
-    # Create one-time Calendly scheduling link for the owner to finalise
-    booking_url = _create_calendly_scheduling_link(event_type_uri) if event_type_uri else None
+    # Create the Google Calendar event directly
+    gcal_link = _create_google_calendar_event(
+        booked_date=real_date,
+        species=sp,
+        surgery_minutes=surgery_min,
+        pet_name=pet_name,
+        owner_name=owner_name,
+        owner_phone=owner_phone,
+    )
 
     window = DELIVERY_WINDOWS[sp]
     pickup = PICKUP_TIMES[sp]
@@ -402,5 +446,5 @@ def create_booking(
         "owner_name": owner_name,
         "owner_phone": owner_phone,
         "pet_name": pet_name,
-        "calendly_booking_url": booking_url,
+        "gcal_event_link": gcal_link,
     })
