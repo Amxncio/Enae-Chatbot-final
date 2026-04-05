@@ -43,7 +43,13 @@
   </div>
 
   <script>
-    const SESSION_ID = "sess_" + Math.random().toString(36).substring(2, 10);
+    const LS_SID = "vet_chat_session_id";
+    const LS_SLOTS = "vet_chat_slot_state";
+    let SESSION_ID = localStorage.getItem(LS_SID);
+    if (!SESSION_ID) {
+      SESSION_ID = "sess_" + Math.random().toString(36).substring(2, 10);
+      localStorage.setItem(LS_SID, SESSION_ID);
+    }
     const messages = document.getElementById("messages");
     const form = document.getElementById("chatForm");
     const input = document.getElementById("msgInput");
@@ -86,11 +92,17 @@
       messages.scrollTop = messages.scrollHeight;
 
       try {
-        const body = new URLSearchParams({ msg: text, session_id: SESSION_ID });
+        const params = { msg: text, session_id: SESSION_ID };
+        const saved = localStorage.getItem(LS_SLOTS);
+        if (saved) params.slot_state = saved;
+        const body = new URLSearchParams(params);
         const resp = await fetch("/ask_bot", { method: "POST", body });
         if (!resp.ok) throw new Error("Server error: " + resp.status);
         const data = await resp.json();
         typing.remove();
+        if (data.slot_state) {
+          localStorage.setItem(LS_SLOTS, JSON.stringify(data.slot_state));
+        }
         addMsg(data.msg || data.error || "No response", "bot");
       } catch (err) {
         typing.remove();

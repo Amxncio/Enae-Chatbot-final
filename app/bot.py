@@ -105,6 +105,26 @@ def _get_slots(session_id: str) -> dict:
     return _slot_store[session_id]
 
 
+_ALLOWED_SLOT_KEYS = frozenset(_default_slots().keys())
+
+
+def apply_slots_from_client(session_id: str, data: dict | None) -> None:
+    """Restore slot state from the client (needed on Vercel: each request may be a cold instance)."""
+    if not data or not isinstance(data, dict):
+        return
+    slots = _default_slots()
+    for k in _ALLOWED_SLOT_KEYS:
+        if k in data:
+            slots[k] = data[k]
+    _slot_store[session_id] = slots
+
+
+def export_slots_for_client(session_id: str) -> dict:
+    """Return a JSON-serializable copy of slots for the client to send on the next request."""
+    s = _get_slots(session_id)
+    return {k: s[k] for k in _ALLOWED_SLOT_KEYS}
+
+
 def _detect_scheduling_intent(msg: str) -> bool:
     text = msg.lower()
     return any(k in text for k in SCHEDULING_KEYWORDS)

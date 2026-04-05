@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -38,8 +40,13 @@ async def home(request: Request):
 async def ask_bot(
     msg: str = Form(default=""),
     session_id: str = Form(default="default"),
+    slot_state: str = Form(default=""),
 ):
-    """Send a message to the chatbot and receive a response."""
+    """Send a message to the chatbot and receive a response.
+
+    Clients should echo back ``slot_state`` from the previous response so booking
+    flow survives serverless cold starts (e.g. Vercel).
+    """
     user_msg = msg.strip()
     sid = session_id.strip() or "default"
 
@@ -49,7 +56,18 @@ async def ask_bot(
             content={"error": "msg must be a non-empty string."},
         )
 
-    from app.bot import ask
+    from app.bot import apply_slots_from_client, ask, export_slots_for_client
+
+    if slot_state.strip():
+        try:
+            parsed = json.loads(slot_state)
+            apply_slots_from_client(sid, parsed)
+        except (json.JSONDecodeError, TypeError):
+            pass
 
     reply = ask(user_msg, sid)
-    return {"msg": reply, "session_id": sid}
+    return {
+        "msg": reply,
+        "session_id": sid,
+        "slot_state": export_slots_for_client(sid),
+    }
