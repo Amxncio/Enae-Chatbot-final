@@ -65,3 +65,19 @@ def test_guided_flow_calls_create_booking_on_confirm(monkeypatch):
 
     assert "2026-04-03" in final
     assert "45" in final
+
+
+def test_human_handoff_does_not_call_availability_tool(monkeypatch):
+    sid = "test-human-handoff"
+    bot._slot_store.pop(sid, None)
+
+    class FailIfCalled:
+        @staticmethod
+        def invoke(_payload):
+            raise AssertionError("check_availability should not be called for human handoff")
+
+    monkeypatch.setattr(bot, "check_availability", FailIfCalled())
+
+    reply = bot.ask("Quiero hablar con un humano", sid)
+    low = reply.lower()
+    assert "persona" in low or "human" in low or "equipo" in low

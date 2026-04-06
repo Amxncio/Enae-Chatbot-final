@@ -67,6 +67,18 @@ _INFO_BYPASS_PATTERNS = [
     r"a que hora",
 ]
 
+_HUMAN_HANDOFF_PATTERNS = [
+    r"i need to speak",
+    r"speak with a human",
+    r"talk to",
+    r"transfer me",
+    r"\bhuman\b",
+    r"hablar con",
+    r"habla con",
+    r"persona humana",
+    r"humano",
+]
+
 SERVICE_KEYWORDS = (
     "esteril",
     "steril",
@@ -139,6 +151,12 @@ def _is_info_question(msg: str) -> bool:
     """True when the message is a general info question, not an active booking request."""
     text = msg.lower()
     return any(re.search(p, text) for p in _INFO_BYPASS_PATTERNS)
+
+
+def _is_human_handoff(msg: str) -> bool:
+    """True when the user explicitly asks to speak with a human."""
+    text = msg.lower()
+    return any(re.search(p, text) for p in _HUMAN_HANDOFF_PATTERNS)
 
 
 _SPANISH_RE = re.compile(
@@ -488,6 +506,17 @@ def ask(user_msg: str, session_id: str = "default") -> str:
     if detected == "es" or not slots["lang"]:
         slots["lang"] = detected
     lang = slots["lang"]
+
+    # Human handoff is a hard requirement: resolve it directly and avoid tool calls.
+    if _is_human_handoff(user_msg):
+        slots["in_flow"] = False
+        slots["awaiting_confirm"] = False
+        slots["last_asked"] = ""
+        return (
+            "Perfecto, te paso con una persona de la clínica para continuar la gestión."
+            if lang == "es"
+            else "Sure, I will transfer you to a member of the clinic team."
+        )
 
     # Capture free-text / numeric answers based on what was last asked.
     last_asked = slots.get("last_asked", "")
