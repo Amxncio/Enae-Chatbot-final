@@ -22,4 +22,11 @@ cd /ruta/al/repo
 python -c "from app.rag import init_rag, retrieve; init_rag(); print(retrieve('What fasting rules before cat surgery?'))"
 ```
 
-**Respuesta final del chat:** capturar desde la UI o con `scripts/capture_acceptance_transcript.py --phase rag` contra `BASE_URL` (Vercel o local).
+**Respuesta final del chat (producción):** ver transcripción fijada en [`transcript.md`](transcript.md) — sección *Bloque 10 — RAG* (generada con `capture_acceptance_transcript.py --phase all` contra Vercel).
+
+Para regenerar solo RAG:
+
+```bash
+export BASE_URL=https://enae-chatbot-final.vercel.app
+python scripts/capture_acceptance_transcript.py --phase rag > /tmp/rag-only.md
+```

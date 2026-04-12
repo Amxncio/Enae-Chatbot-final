@@ -36,6 +36,16 @@ Reference document: *Conversaciones de aceptación — Chatbot clínica veterina
 - Tool conversations (8–9) verify the tool is **invocable** and returns **coherent** data.
 - RAG conversation (10) verifies the **pipeline** retrieves from the official URL.
 
+## Matriz Doc VET (trazabilidad con el backlog del curso)
+
+Alineado con `Jira_Backlog_Caso_Veterinario_ES.md` / tablero Jira del equipo. Lista completa de tickets y SP: tabla **Backlog / Tickets** en [`README.md`](../README.md).
+
+| Conv. | Doc VET (historias / frentes relacionados) | Implementación en repo |
+|-------|---------------------------------------------|-------------------------|
+| 1–7 | VET-7 (API), VET-8 (UI), VET-9 (`ask_bot` + LLM + prompt), VET-10 (memoria `session_id`) | `app/main.py`, `app/bot.py`, `app/prompt.py` — sin tool de disponibilidad en la cadena informativa |
+| 8–9 | VET-12 (tool mock), VET-13 (calendario real), flujo guiado + `create_booking` | `app/tools.py`, `app/bot.py` (`slot_state`) |
+| 10 | VET-11 (RAG URL oficial) | `app/rag.py`, `app/config.py` (`RAG_SOURCE_URL`) |
+
 ## Guion literal (inglés, alineado al MVP)
 
 Usa **un solo `session_id`** para el bloque 1–7. Para 8, 9 y 10 conviene **sesiones distintas** para no mezclar memoria de cita.

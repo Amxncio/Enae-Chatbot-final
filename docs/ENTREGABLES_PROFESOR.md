@@ -56,7 +56,7 @@
 - [ ] Si el repo es **privado:** añadir al profesor como colaborador en GitHub — usuario **`jmarco111`** (según PDF).  
 - [ ] **URL de Vercel** (o captura + explicación si el stack no encaja y hay alternativa acordada con el profesor).  
 - [ ] Enlace o export del **tablero Jira** (o invitación al profesor) con tickets que mapeen a la puntuación.  
-- [ ] **Evidencias breves:** 2–3 preguntas de prueba para RAG; 2–3 turnos alineados con conversaciones e intents; log o captura de la tool de disponibilidad.  
+- [x] **Evidencias breves (repo):** preguntas RAG en README; transcripción completa conv. 1–10 en [`docs/evidence/transcript.md`](evidence/transcript.md) (producción); tests y guías en `docs/evidence/`.  
 - [ ] **Nunca** subir claves API: solo variables en el panel del host y `.env.example` sin secretos.
 
 ---

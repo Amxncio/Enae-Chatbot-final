@@ -191,9 +191,9 @@ Criterios alineados con [`Caso Final Cierre y Evaluación.pdf`](Caso%20Final%20C
 
 | Criterio (PDF Sesión 6) | Evidencia en el repo |
 |-------------------------|----------------------|
-| Base 5 pts (conv. 1–7, memoria, sin tool en info) | [`docs/acceptance_conversations.md`](docs/acceptance_conversations.md), tests `tests/test_guided_flow.py` (`_is_info_question`), transcript opcional en `docs/evidence/transcript.md` |
-| +1 RAG (conv. 10) | [`docs/evidence/rag_conversation_10.md`](docs/evidence/rag_conversation_10.md), [`app/rag.py`](app/rag.py) |
-| +1 Tool (conv. 8–9) | [`docs/evidence/tool_conversations_8_9.md`](docs/evidence/tool_conversations_8_9.md), `pytest tests/test_availability_tool.py -v` |
+| Base 5 pts (conv. 1–7, memoria, sin tool en info) | [`docs/acceptance_conversations.md`](docs/acceptance_conversations.md) (incl. matriz Doc VET), [`docs/evidence/transcript.md`](docs/evidence/transcript.md) (*Bloque 1–7*), `tests/test_guided_flow.py` |
+| +1 RAG (conv. 10) | [`docs/evidence/transcript.md`](docs/evidence/transcript.md) (*Bloque 10*), [`docs/evidence/rag_conversation_10.md`](docs/evidence/rag_conversation_10.md), [`app/rag.py`](app/rag.py) |
+| +1 Tool (conv. 8–9) | [`docs/evidence/transcript.md`](docs/evidence/transcript.md) (*Bloques 8–9*), [`docs/evidence/tool_conversations_8_9.md`](docs/evidence/tool_conversations_8_9.md), `pytest tests/test_availability_tool.py -v` |
 | +1 Vercel | URL arriba; smoke manual o script; **sin** `.env` en Git |
 | +1 Jira | [Board EV](https://amxncio.atlassian.net/jira/software/projects/EV/boards/34); issues `EV-xx` = historias del proyecto; el prefijo **VET-n** en títulos es la etiqueta pedagógica del caso |
 | +1 Intents | [`docs/intents_catalog.md`](docs/intents_catalog.md) (20 intents) |
