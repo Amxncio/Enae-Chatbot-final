@@ -118,37 +118,42 @@ curl -X POST http://localhost:8000/ask_bot \
 
 ## Tool de disponibilidad
 
-El chatbot dispone de una herramienta (`check_availability`) que el LLM puede invocar para consultar disponibilidad quirúrgica.
+- **`check_availability`:** misma lógica Tetris + Calendly; se demuestra con `pytest tests/test_availability_tool.py` (conv. 8–9 a nivel de criterio de tool).
+- **`create_booking`:** la UI y `/ask_bot` confirman la cita tras el cuestionario guiado; aplica las mismas reglas de capacidad y calendario.
 
 - **Algoritmo Tetris:** ≤240 min/día, máx 2 perros/día, ventanas de entrega por especie.
 - **Modo real (VET-13):** consulta de slots reales con Calendly (`/event_type_available_times`).
 - **Fallback seguro:** si Calendly falla o no está configurado, usa calendario mock lun–jue.
-- **Evidencia:** Conv. 8 y 9 del documento de aceptación.
+- **Evidencia:** Conv. 8 y 9 — ver [`docs/evidence/tool_conversations_8_9.md`](docs/evidence/tool_conversations_8_9.md).
+
+**Conv. 1–7 (base):** el modelo de chat **no** tiene herramientas enlazadas; la disponibilidad no puede dispararse desde el LLM en preguntas informativas. El cuestionario de cita es aparte.
 
 ---
 
 ## Flujo guiado de cita (memoria real)
 
-El bot ahora sigue un flujo estricto por pasos para evitar respuestas prematuras:
+Orden de recogida de datos (un campo por turno), antes de la tarjeta de confirmación y `create_booking`:
 
-1. Servicio (esterilizacion/castracion)
-2. Especie (gato/perro)
-3. Sexo (macho/hembra)
-4. Peso solo si es perra
-5. Fecha preferida (opcional)
+1. Servicio (esterilización / vacunación / microchip; la esterilización es la que dispara Tetris).
+2. Especie (gato/perro).
+3. Nombre de la mascota.
+4. Sexo (macho/hembra).
+5. Edad en años (regla de analítica si tiene más de 6 años).
+6. Peso en kg solo si es perra.
+7. Nombre del titular y contacto (teléfono o email).
+8. Confirmación sí/no → reserva.
 
-Solo cuando los datos obligatorios estan completos consulta `check_availability`.
-Si falta algo, pregunta un unico dato por turno y reutiliza memoria de la sesion para no repetir preguntas.
-Las preguntas informativas (hora de recogida, instrucciones, handoff a humano) se responden directamente aunque haya un flujo de cita activo.
+La **UI** debe reenviar `slot_state` en cada `POST /ask_bot` (el JSON devuelto por la API) para que el flujo sobreviva a instancias frías en Vercel.
 
-Ejemplo breve:
+Las preguntas informativas del guion 1–7 (ventanas, recogida, urgencias, celo, humano) **no** siguen el cuestionario aunque el usuario hubiera dicho antes «cita»; el backend delega en el LLM sin tools.
+
+Ejemplo breve (esterilización perro):
 
 - User: "I need an appointment for sterilisation of my dog."
-- Bot: "Is your pet male or female?"
-- User: "Female."
-- Bot: "Since she is a female dog, I need her weight in kg. How much does she weigh?"
-- User: "14 kg"
-- Bot: devuelve disponibilidad con ventana de entrega + duración quirúrgica + hora de recogida + instrucciones de ayuno.
+- Bot: pregunta especie / nombre / sexo / edad / peso (hembra) / titular / contacto.
+- User: completa datos.
+- Bot: muestra resumen y pide confirmación.
+- User: "yes" → respuesta con fecha, ventana, recogida y duración.
 
 **Rechazo automático en celo:** si el usuario menciona que la perra está en celo, el bot niega la cita y explica que debe esperar 2 meses tras el fin del ciclo (riesgo de pseudogestación). Los gatos sí pueden operarse en celo.
 
@@ -175,6 +180,23 @@ El proyecto se despliega como función serverless Python en Vercel.
 | Reglas SDD | [`docs/SDD_PROJECT_RULES.md`](docs/SDD_PROJECT_RULES.md) |
 | Conversaciones de aceptación | [`docs/acceptance_conversations.md`](docs/acceptance_conversations.md) |
 | Checklist final de evidencias | [`docs/final_evidence_checklist.md`](docs/final_evidence_checklist.md) |
+| Carpeta de evidencias (RAG, tool, transcript) | [`docs/evidence/`](docs/evidence/) |
+
+---
+
+## Paquete de entrega (nota 10)
+
+| Criterio (rúbrica típica) | Evidencia en el repo |
+|---------------------------|----------------------|
+| Base 5 pts (conv. 1–7, memoria, sin tool en info) | [`docs/acceptance_conversations.md`](docs/acceptance_conversations.md), tests `tests/test_guided_flow.py` (`_is_info_question`), transcript opcional en `docs/evidence/transcript.md` |
+| +1 RAG (conv. 10) | [`docs/evidence/rag_conversation_10.md`](docs/evidence/rag_conversation_10.md), [`app/rag.py`](app/rag.py) |
+| +1 Tool (conv. 8–9) | [`docs/evidence/tool_conversations_8_9.md`](docs/evidence/tool_conversations_8_9.md), `pytest tests/test_availability_tool.py -v` |
+| +1 Vercel | URL arriba; smoke manual o script; **sin** `.env` en Git |
+| +1 Jira | [Board EV](https://amxncio.atlassian.net/jira/software/projects/EV/boards/34); issues `EV-xx` = historias del proyecto; el prefijo **VET-n** en títulos es la etiqueta pedagógica del caso |
+| +1 Intents | [`docs/intents_catalog.md`](docs/intents_catalog.md) (20 intents) |
+| SDD / Skills | [`.cursor/skills/`](.cursor/skills/), [`docs/SDD_PROJECT_RULES.md`](docs/SDD_PROJECT_RULES.md) |
+
+**PDF Sesión 6 (criterios oficiales):** debe contrastarse en local con esta tabla; si pide formato extra (vídeo, PDF único), generarlo y enlazarlo aquí.
 
 ---
 

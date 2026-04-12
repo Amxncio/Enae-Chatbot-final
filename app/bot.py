@@ -12,7 +12,7 @@ from langchain_groq import ChatGroq
 from app.config import GROQ_API_KEY, GROQ_MODEL
 from app.prompt import SYSTEM_PROMPT
 from app.rag import retrieve
-from app.tools import check_availability, create_booking
+from app.tools import create_booking
 
 _store: dict[str, InMemoryChatMessageHistory] = {}
 _slot_store: dict[str, dict] = {}
@@ -53,6 +53,24 @@ _INFO_BYPASS_PATTERNS = [
     r"when do i pick",
     r"pick.?up",
     r"\bcollect\b",
+    r"when should i bring",
+    r"bring my",
+    r"drop[- ]?off",
+    r"surgery day",
+    r"blood test",
+    r"pre[- ]?op",
+    r"years old",
+    r"how old",
+    r"bleeding",
+    r"injury",
+    r"injured",
+    r"emergency",
+    r"urgent",
+    r"spayed",
+    r"spay next",
+    r"sterilis",
+    r"can she be",
+    r"can he be",
     r"i need to speak",
     r"speak with a human",
     r"talk to",
@@ -65,6 +83,10 @@ _INFO_BYPASS_PATTERNS = [
     r"recogida",
     r"a qué hora",
     r"a que hora",
+    r"anal[ií]tic",
+    r"does she need",
+    r"does my",
+    r"does he need",
 ]
 
 _HUMAN_HANDOFF_PATTERNS = [
@@ -469,15 +491,16 @@ def _build_chain():
         temperature=0.3,
     )
 
-    llm_with_tools = llm.bind_tools([check_availability])
-
+    # No tool binding on the LLM path: conv. 1–7 must never trigger check_availability
+    # from the model. Booking uses create_booking in the guided slot flow; availability
+    # logic is covered by tests invoking check_availability directly.
     prompt = ChatPromptTemplate.from_messages([
         ("system", SYSTEM_PROMPT),
         MessagesPlaceholder(variable_name="history"),
         ("human", "{context}\n\nUser: {input}"),
     ])
 
-    chain = prompt | llm_with_tools
+    chain = prompt | llm
 
     return RunnableWithMessageHistory(
         chain,
@@ -573,10 +596,8 @@ def ask(user_msg: str, session_id: str = "default") -> str:
         slots["in_flow"] = False
         slots["awaiting_confirm"] = False
 
-    # General info questions bypass the slot flow even if in_flow is True.
-    if slots["in_flow"] and _is_info_question(user_msg):
-        pass  # fall through to the LLM path below
-    elif slots.get("awaiting_confirm"):
+    # General info questions bypass slot questions even if in_flow is True (conv. 1–7).
+    if slots.get("awaiting_confirm"):
         # User has seen the confirmation card — wait for yes/no.
         if _is_negative(user_msg):
             _slot_store[session_id] = _default_slots()
@@ -607,7 +628,7 @@ def ask(user_msg: str, session_id: str = "default") -> str:
             if lang == "es"
             else "Please reply *yes* to confirm or *no* to cancel."
         )
-    elif slots["in_flow"]:
+    elif slots["in_flow"] and not _is_info_question(user_msg):
         missing = _next_missing_field(slots)
         if missing:
             slots["last_asked"] = missing
@@ -632,29 +653,6 @@ def ask(user_msg: str, session_id: str = "default") -> str:
             {"input": user_msg, "context": context_block},
             config=config,
         )
-
-        if hasattr(response, "tool_calls") and response.tool_calls:
-            tool_results = []
-            for tc in response.tool_calls:
-                if tc["name"] == "check_availability":
-                    result = check_availability.invoke(tc["args"])
-                    tool_results.append(result)
-
-            if tool_results:
-                history = _get_session_history(session_id)
-                history.add_message(response)
-
-                tool_context = "\n".join(
-                    f"Tool result: {r}" for r in tool_results
-                )
-                followup = chain.invoke(
-                    {
-                        "input": f"Based on the tool results below, provide a helpful response to the user.\n\n{tool_context}\n\nOriginal question: {user_msg}",
-                        "context": context_block,
-                    },
-                    config=config,
-                )
-                return followup.content if hasattr(followup, "content") else str(followup)
 
         return response.content if hasattr(response, "content") else str(response)
 

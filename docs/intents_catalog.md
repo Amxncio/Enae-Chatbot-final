@@ -30,7 +30,7 @@
 | Conv. | Topic | Intents triggered |
 |-------|-------|-------------------|
 | 1 | Greeting and bot scope | `greeting`, `ask_scope` |
-| 2 | Delivery windows (cat vs dog), memory of species | `book_appointment`, `ask_delivery_window`, `ask_pickup_time` |
+| 2 | Delivery windows (cat vs dog), memory of species | `ask_delivery_window`, `ask_pickup_time` |
 | 3 | Pre-operative blood test (>6 years) | `book_appointment`, `ask_preop_bloodwork` |
 | 4 | Emergency → triage, out of scope | `emergency_triage` |
 | 5 | Booking impossible (dog in heat) → rejection | `book_appointment`, `heat_rejection` |

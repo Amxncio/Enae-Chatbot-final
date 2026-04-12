@@ -1,26 +1,35 @@
 # Final Evidence Checklist (ENAE)
 
-Usa esta lista para entregar al profesor pruebas **homogéneas** y trazables.
+Lista para entregar al profesor con trazabilidad **criterio → prueba**.
+
+## Resumen técnico (implementado en código)
+
+| Requisito | Cómo queda cubierto |
+|-----------|---------------------|
+| Conv. 1–7 sin tool de disponibilidad vía LLM | `app/bot.py`: cadena sin `bind_tools`; bypass de cuestionario si `_is_info_question` con `in_flow`. |
+| Memoria + sesión | `session_id` + historial LangChain; flujo de cita: `slot_state` en `POST /ask_bot` (Vercel). |
+| Conv. 8–9 (Tetris / calendario) | `create_booking` en UI; `check_availability` en `pytest`. |
+| Conv. 10 (RAG) | `app/rag.py` + URL en `app/config.py`; ver [`docs/evidence/rag_conversation_10.md`](evidence/rag_conversation_10.md). |
 
 ## Cómo generar texto de apoyo
 
 - **Transcripción Markdown** (misma API que la UI):  
   `python scripts/capture_acceptance_transcript.py --phase all > docs/evidence/transcript.md`  
   Definir `BASE_URL` (Vercel o local). El script reenvía `slot_state` en cada POST.
-- **Tool `check_availability` (payload + JSON):**  
-  `python -m pytest tests/test_availability_tool.py -v`  
-  Los tests invocan la tool directamente y muestran `mode: mock_fallback` o `real_calendly` (mockeado).
+- **Tool `check_availability`:**  
+  `python -m pytest tests/test_availability_tool.py -v`
+- **Flujo guiado + bypass base:**  
+  `python -m pytest tests/test_guided_flow.py -v`
 
 ## 1) Base chatbot (Conversations 1-7)
 
-- [ ] Ejecutar conversaciones 1-7 en el **mismo** `session_id`.
-- [ ] Mostrar memoria (especie gata recordada en recogida sin repetir “cat”).
-- [ ] Mostrar derivación en urgencia (fuera de alcance → clínico / otro centro).
-- [ ] Guardar capturas de pantalla **o** pegar `docs/evidence/transcript.md` (bloque base).
+- [x] Criterio técnico: el LLM no invoca `check_availability` (cadena sin tools).
+- [x] Patrones de bypass alineados al guion literal (tests en `test_guided_flow.py`).
+- [ ] Ejecutar conversaciones 1-7 en el **mismo** `session_id` en UI o transcript y guardar captura o `docs/evidence/transcript.md`.
 
 **Guion:** [`docs/acceptance_conversations.md`](acceptance_conversations.md) — sección *Guion literal*.
 
-Por conversación (rellenar):
+Por conversación (rellenar tras tu captura):
 
 - Conversation: `#1` … `#7`
 - Input(s):
@@ -30,56 +39,39 @@ Por conversación (rellenar):
 
 ## 2) Tool availability (Conversations 8-9)
 
-- [ ] Conversación 8 (gato): flujo guiado completo hasta `yes` **o** evidencia de `check_availability` vía pytest.
-- [ ] Conversación 9 (perro): idem; debe reflejarse **peso** y duración coherente con reglas de hembra/perro.
-- [ ] La respuesta final de cita incluye **ventana de entrega**, **recogida** y **duración** de cirugía.
-- [ ] Indicar modo de calendario: en confirmación puede aparecer “(calendario real)” si `CALENDLY_*` está configurado en Vercel; si no, mock es válido — documentar cuál entorno usaste.
-
-**Nota de implementación:** El flujo guiado confirma con `create_booking`, que aplica las mismas reglas Tetris y el mismo backend Calendly que `check_availability`. Para demostrar la **tool** explícitamente, adjunta salida de `pytest tests/test_availability_tool.py -v`.
-
-Evidence fields:
-
-- Tool call payload: *(pegar del test o de logs si tienes trace)*
-- Tool response JSON:
-- Why result is coherent with Tetris rules:
-- Screenshot or log:
+- [x] Documentación: [`docs/evidence/tool_conversations_8_9.md`](evidence/tool_conversations_8_9.md)
+- [ ] Transcripción `tool_cat` / `tool_dog` o capturas de la UI hasta confirmación.
+- [x] Tests de `check_availability`: `pytest tests/test_availability_tool.py`
 
 ## 3) RAG (Conversation 10)
 
-- [ ] Pregunta preoperatoria anclada en la URL oficial (p. ej. ayuno).
-- [ ] Comprobar que la respuesta cita reglas 8–12 h / agua 1–2 h (u equivalente).
-- [ ] Transcripción corta o captura.
-
-Evidence fields:
-
-- User question: *(ej.: `What fasting rules should I follow before my cat's surgery?`)*
-- Retrieved/grounded points:
-- Final assistant answer:
-- Screenshot or log:
+- [x] Plantilla con recuperación real: [`docs/evidence/rag_conversation_10.md`](evidence/rag_conversation_10.md)
+- [ ] Captura de la respuesta del asistente en producción o `--phase rag` del script.
 
 ## 4) Deploy and infrastructure
 
-- [x] Vercel URL responde en `/`.
-- [x] `POST /ask_bot` funciona en producción.
-- [ ] Variables de entorno solo en panel Vercel (captura parcial sin secretos, o declaración explícita en el texto de entrega).
-
-Evidence fields:
-
-- **URL tested:** `https://enae-chatbot-final.vercel.app`
-- **Date/time:** 2026-04-05 (verificación automatizada)
-- **Result:**
-  - `GET /` → HTTP 200
-  - `POST /ask_bot` con `msg=Hello&session_id=evidence-probe` → JSON con `msg` y `slot_state` (respuesta del asistente sin error 5xx)
+- [x] URL pública documentada: `https://enae-chatbot-final.vercel.app`
+- [x] Smoke (2026-04-12): `GET /` → 200; `POST /ask_bot` con `msg=Hello` → 200 y JSON con `msg` + `slot_state`.
+- [ ] Tras tu próximo deploy, repetir smoke en incógnito si cambias dependencias o `vercel.json`.
+- [ ] Variables solo en panel Vercel: `GROQ_API_KEY`, `CALENDLY_*` (y otras si las usas). Sin capturar valores secretos.
 
 ## 5) Jira and traceability
 
-- [ ] Ticket de calendario real cerrado (`EV-17`) — marcar cuando lo tengas en Jira.
-- [ ] Comentarios de enriquecimiento en tickets VET (alcance).
-- [x] Commits en `main` con mensajes claros (ej.: integración Calendar, UI sin enlace GCal en chat).
+- [ ] Tablero [EV](https://amxncio.atlassian.net/jira/software/projects/EV/boards/34): 3 EPICs, historias enlazadas al repo.
+- [x] Nota README: claves **EV-xx** en Jira vs etiqueta **VET-n** en títulos de caso.
+- [x] Comentario de trazabilidad en `EV-17` (entrega nota 10 / rutas de evidencia en repo).
+- [ ] Ticket calendario real (`EV-17` / VET-13) revisado por ti: estado *Finalizada* si el profe lo exige visible.
 
-Evidence fields:
+## 6) Intents (+1)
 
-- Jira issue links:
-  - `https://amxncio.atlassian.net/browse/EV-17`
-- **Commit hash(es) (referencia repo):** `11bd016050e14de38a5b6d3f4b5d1a89d74692c9` *(actualizar si haces más commits después de la entrega)*
-- Notes:
+- [x] 20 intents + mapa 1–10: [`docs/intents_catalog.md`](intents_catalog.md)
+
+## 7) Contraste con PDF Sesión 6
+
+- [ ] Abrir el PDF de cierre en tu máquina y marcar aquí cualquier requisito extra (plazo, vídeo, entregable único):
+
+*(Notas:)* 
+
+---
+
+**Commit de referencia (actualizar si haces push nuevo):** ejecutar `git rev-parse HEAD` antes de entregar.

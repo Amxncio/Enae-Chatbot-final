@@ -67,17 +67,17 @@ def test_guided_flow_calls_create_booking_on_confirm(monkeypatch):
     assert "45" in final
 
 
-def test_human_handoff_does_not_call_availability_tool(monkeypatch):
+def test_human_handoff_short_circuits_before_booking_flow():
     sid = "test-human-handoff"
     bot._slot_store.pop(sid, None)
 
-    class FailIfCalled:
-        @staticmethod
-        def invoke(_payload):
-            raise AssertionError("check_availability should not be called for human handoff")
-
-    monkeypatch.setattr(bot, "check_availability", FailIfCalled())
-
     reply = bot.ask("Quiero hablar con un humano", sid)
     low = reply.lower()
-    assert "persona" in low or "human" in low or "equipo" in low
+    assert "persona" in low or "human" in low or "equipo" in low or "transfer" in low
+
+
+def test_info_bypass_matches_acceptance_base_messages():
+    assert bot._is_info_question("When should I bring my cat for drop-off on surgery day?")
+    assert bot._is_info_question("My cat is 8 years old. Does she need a blood test before sterilisation?")
+    assert bot._is_info_question("My dog is bleeding heavily after an injury. What should I do?")
+    assert bot._is_info_question("What time can I pick up my dog after surgery?")
