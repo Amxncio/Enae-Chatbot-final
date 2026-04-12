@@ -180,6 +180,7 @@ El proyecto se despliega como función serverless Python en Vercel.
 | Reglas SDD | [`docs/SDD_PROJECT_RULES.md`](docs/SDD_PROJECT_RULES.md) |
 | Conversaciones de aceptación | [`docs/acceptance_conversations.md`](docs/acceptance_conversations.md) |
 | Checklist final de evidencias | [`docs/final_evidence_checklist.md`](docs/final_evidence_checklist.md) |
+| **Índice de entregables para el profesor** | [`docs/ENTREGABLES_PROFESOR.md`](docs/ENTREGABLES_PROFESOR.md) |
 | Carpeta de evidencias (RAG, tool, transcript) | [`docs/evidence/`](docs/evidence/) |
 
 ---
