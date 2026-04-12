@@ -50,10 +50,11 @@ Lista para entregar al profesor con trazabilidad **criterio → prueba**.
 
 ## 5) Jira and traceability
 
-- [ ] **Revisión manual antes de entregar:** tablero [EV](https://amxncio.atlassian.net/jira/software/projects/EV/boards/34) con **3 EPICs** (SET UP, SDD, CHATBOT), issues que reflejen trabajo real y, si el repo es privado, **invitación al profesor** o export.
+- [x] Tablero [EV](https://amxncio.atlassian.net/jira/software/projects/EV/boards/34): **3 EPICs** (EV-2 CHATBOT, EV-3 SDD, EV-4 SET UP) y **VET-1…VET-14** (EV-5…EV-18) pasados a **Finalizada** (abr 2026). Comentario de cierre en [EV-2](https://amxncio.atlassian.net/browse/EV-2) con enlace a repo y `transcript.md`.
 - [x] Nota README: claves **EV-xx** en Jira vs etiqueta **VET-n** en títulos de caso.
 - [x] Comentario de trazabilidad en `EV-17` (entrega nota 10 / rutas de evidencia en repo).
-- [ ] Ticket calendario real (`EV-17` / VET-13): dejar en estado **Finalizada** (o el estado que pida el profesor) si debe verse cerrado en la revisión.
+- [x] `EV-17` (VET-13 calendario real): **Finalizada**.
+- [ ] Si el repo es **privado:** invitar al profesor (`jmarco111`) o enviar export del tablero según indique Canvas.
 
 ## 6) Intents (+1)
 
