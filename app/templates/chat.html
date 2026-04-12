@@ -34,10 +34,10 @@
       <small>Sterilisation scheduling &amp; pre-surgery info</small>
     </div>
     <div class="chat-messages" id="messages">
-      <div class="msg bot"><div class="msg-bubble">¡Hola! Soy la asistente virtual de la clínica. Si tienes dudas antes de una cirugía o quieres reservar una esterilización, aquí estoy: te voy preguntando lo necesario con calma, sin agobios. ¿Por dónde empezamos?</div></div>
+      <div class="msg bot"><div class="msg-bubble">Le saluda la asistente virtual de la clínica veterinaria. Puede consultar información sobre preparación preoperatoria y normas del centro, o iniciar la solicitud de una cita de esterilización; en este caso le solicitaremos los datos necesarios de forma ordenada. Indíquenos en qué podemos ayudarle.</div></div>
     </div>
     <form class="chat-input" id="chatForm">
-      <input type="text" id="msgInput" placeholder="Ej.: quiero cita / ¿qué ayuno hace falta?" autocomplete="off" autofocus>
+      <input type="text" id="msgInput" placeholder="Escriba su consulta o indique si desea solicitar una cita" autocomplete="off" autofocus>
       <button type="submit" id="sendBtn">Send</button>
     </form>
   </div>
@@ -87,7 +87,7 @@
 
       const typing = document.createElement("div");
       typing.className = "typing";
-      typing.textContent = "Thinking…";
+      typing.textContent = "Procesando…";
       messages.appendChild(typing);
       messages.scrollTop = messages.scrollHeight;
 
