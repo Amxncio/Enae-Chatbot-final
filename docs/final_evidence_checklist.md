@@ -68,7 +68,8 @@ Por conversación (rellenar tras tu captura):
 
 ## 7) Contraste con PDF Sesión 6
 
-- [ ] Abrir el PDF de cierre en tu máquina y marcar aquí cualquier requisito extra (plazo, vídeo, entregable único):
+- [x] PDF en el repo: [`Caso Final Cierre y Evaluación.pdf`](../Caso%20Final%20Cierre%20y%20Evaluación.pdf) (mismo contenido que *Sesión 6 — Cierre y criterios* del aula).
+- [ ] Si Canvas/plataforma pide **formato adicional** no recogido en ese PDF (vídeo, ZIP, plazo distinto), anótalo aquí:
 
 *(Notas:)* 
 

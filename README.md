@@ -187,8 +187,10 @@ El proyecto se despliega como función serverless Python en Vercel.
 
 ## Paquete de entrega (nota 10)
 
-| Criterio (rúbrica típica) | Evidencia en el repo |
-|---------------------------|----------------------|
+Criterios alineados con [`Caso Final Cierre y Evaluación.pdf`](Caso%20Final%20Cierre%20y%20Evaluación.pdf) (Sesión 6). Si el repositorio es **privado**, añade al profesor como colaborador en GitHub: **`jmarco111`**.
+
+| Criterio (PDF Sesión 6) | Evidencia en el repo |
+|-------------------------|----------------------|
 | Base 5 pts (conv. 1–7, memoria, sin tool en info) | [`docs/acceptance_conversations.md`](docs/acceptance_conversations.md), tests `tests/test_guided_flow.py` (`_is_info_question`), transcript opcional en `docs/evidence/transcript.md` |
 | +1 RAG (conv. 10) | [`docs/evidence/rag_conversation_10.md`](docs/evidence/rag_conversation_10.md), [`app/rag.py`](app/rag.py) |
 | +1 Tool (conv. 8–9) | [`docs/evidence/tool_conversations_8_9.md`](docs/evidence/tool_conversations_8_9.md), `pytest tests/test_availability_tool.py -v` |
@@ -197,7 +199,7 @@ El proyecto se despliega como función serverless Python en Vercel.
 | +1 Intents | [`docs/intents_catalog.md`](docs/intents_catalog.md) (20 intents) |
 | SDD / Skills | [`.cursor/skills/`](.cursor/skills/), [`docs/SDD_PROJECT_RULES.md`](docs/SDD_PROJECT_RULES.md) |
 
-**PDF Sesión 6 (criterios oficiales):** debe contrastarse en local con esta tabla; si pide formato extra (vídeo, PDF único), generarlo y enlazarlo aquí.
+**Índice detallado para el profesor:** [`docs/ENTREGABLES_PROFESOR.md`](docs/ENTREGABLES_PROFESOR.md).
 
 ---
 
