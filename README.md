@@ -187,7 +187,7 @@ El proyecto se despliega como función serverless Python en Vercel.
 
 ## Paquete de entrega (nota 10)
 
-Criterios alineados con [`Caso Final Cierre y Evaluación.pdf`](Caso%20Final%20Cierre%20y%20Evaluación.pdf) (Sesión 6). Si el repositorio es **privado**, añade al profesor como colaborador en GitHub: **`jmarco111`**.
+Criterios alineados con [`Caso Final Cierre y Evaluación.pdf`](Caso%20Final%20Cierre%20y%20Evaluación.pdf) (Sesión 6). El repositorio es **público**; solo haría falta invitar al profesor (`jmarco111`) si en algún momento pasara a privado.
 
 | Criterio (PDF Sesión 6) | Evidencia en el repo |
 |-------------------------|----------------------|

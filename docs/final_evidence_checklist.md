@@ -50,11 +50,11 @@ Lista para entregar al profesor con trazabilidad **criterio → prueba**.
 
 ## 5) Jira and traceability
 
-- [x] Tablero [EV](https://amxncio.atlassian.net/jira/software/projects/EV/boards/34): **3 EPICs** (EV-2 CHATBOT, EV-3 SDD, EV-4 SET UP) y **VET-1…VET-14** (EV-5…EV-18) pasados a **Finalizada** (abr 2026). Comentario de cierre en [EV-2](https://amxncio.atlassian.net/browse/EV-2) con enlace a repo y `transcript.md`.
+- [x] Tablero [EV](https://amxncio.atlassian.net/jira/software/projects/EV/boards/34): **3 EPICs** (EV-2 CHATBOT, EV-3 SDD, EV-4 SET UP) y **VET-1…VET-14** (EV-5…EV-18) en **Finalizada** (abr 2026). **Comentario de resolución** en cada issue (EPICs + historias): repo público, rutas de evidencia (`docs/evidence/transcript.md`, etc.) y enlaces a código/README.
 - [x] Nota README: claves **EV-xx** en Jira vs etiqueta **VET-n** en títulos de caso.
 - [x] Comentario de trazabilidad en `EV-17` (entrega nota 10 / rutas de evidencia en repo).
 - [x] `EV-17` (VET-13 calendario real): **Finalizada**.
-- [ ] Si el repo es **privado:** invitar al profesor (`jmarco111`) o enviar export del tablero según indique Canvas.
+- [x] Repo **público** (`Amxncio/Enae-Chatbot-final`): no hace falta invitación GitHub; el tablero EV sigue enlazado desde README y `docs/ENTREGABLES_PROFESOR.md`.
 
 ## 6) Intents (+1)
 

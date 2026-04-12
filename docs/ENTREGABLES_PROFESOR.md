@@ -2,7 +2,7 @@
 
 **Alumno:** Amancio  
 **Rama principal:** `main`  
-**Repositorio:** `Amxncio/Enae-Chatbot-final`
+**Repositorio (público):** [Amxncio/Enae-Chatbot-final](https://github.com/Amxncio/Enae-Chatbot-final)
 
 **Documento normativo en este repo:** [`Caso Final Cierre y Evaluación.pdf`](../Caso%20Final%20Cierre%20y%20Evaluación.pdf) (Sesión 6: *Cierre, entrega del caso y criterios de evaluación*, 27 marzo 2026 — Prof. Jaime Marco, ENAE Business School). En la plataforma del curso el mismo material puede figurar como `viewer/assets/documents/ENAE - Sesión 6_ Cierre, entrega del caso y criterios de evaluación.pdf` (véase `viewer/data/course-data.js` en el export del aula).
 
@@ -52,12 +52,12 @@
 
 ## Checklist de entregables (PDF — «ENTREGABLES (CHECKLIST)»)
 
-- [ ] Enlace al repositorio con historial claro y README con **cómo ejecutar** y **qué habéis implementado**.  
-- [ ] Si el repo es **privado:** añadir al profesor como colaborador en GitHub — usuario **`jmarco111`** (según PDF).  
-- [ ] **URL de Vercel** (o captura + explicación si el stack no encaja y hay alternativa acordada con el profesor).  
-- [ ] Enlace o export del **tablero Jira** (o invitación al profesor) con tickets que mapeen a la puntuación.  
+- [x] Enlace al repositorio **público** con README (**cómo ejecutar** + **qué está implementado**).  
+- [x] *(PDF: si el repo fuera privado, colaborador `jmarco111`.)* — No aplica: repo abierto.  
+- [x] **URL de Vercel** documentada en README y en este índice.  
+- [x] **Tablero Jira** [EV](https://amxncio.atlassian.net/jira/software/projects/EV/boards/34): tickets VET cerrados con **comentario de resolución** (repo + evidencias).  
 - [x] **Evidencias breves (repo):** preguntas RAG en README; transcripción completa conv. 1–10 en [`docs/evidence/transcript.md`](evidence/transcript.md) (producción); tests y guías en `docs/evidence/`.  
-- [ ] **Nunca** subir claves API: solo variables en el panel del host y `.env.example` sin secretos.
+- [x] **Sin secretos en Git:** `.env` en `.gitignore`, `.env.example` con placeholders; claves solo en panel Vercel / `.env` local.
 
 ---
 
