@@ -1,36 +1,60 @@
 # Entregables — Caso chatbot clínica veterinaria (ENAE)
 
-Documento índice con **enlaces directos** a lo que suele pedirse en el cierre del caso (repo, despliegue, Jira, documentación técnica, evidencias y criterios de aceptación).
-
 **Alumno:** Amancio  
 **Rama principal:** `main`  
 **Repositorio:** `Amxncio/Enae-Chatbot-final`
 
 ---
 
-## 1. Accesos operativos (lo primero que revisa el profesor)
+## Marco normativo (Sesión 6)
 
-| Entregable | Enlace |
-|------------|--------|
+El documento oficial de **cierre del caso y criterios de evaluación** del curso es el PDF que figura en el material descargado como:
+
+**`viewer/assets/documents/ENAE - Sesión 6_ Cierre, entrega del caso y criterios de evaluación.pdf`**
+
+(Referencia en el índice del viewer: `viewer/data/course-data.js`, ítem con ese título.)
+
+En muchas exportaciones ZIP del aula **no viaja el binario** de `viewer/assets/documents/`; en ese caso hay que abrir el mismo archivo desde la plataforma o copiarlo a esa ruta. **No se asume aquí ninguna rúbrica ni lista de entregables** que no esté en ese PDF: lo siguiente es un **mapa de navegación** al código y a la documentación del proyecto para localizar evidencias **después** de contrastar con lo que pida el PDF.
+
+---
+
+## Entregables y criterios (según el PDF — completar literalmente)
+
+Abre el PDF de la Sesión 6 y **trascribe en esta tabla** los criterios, entregables, formatos y ponderaciones tal como aparecen (títulos y porcentajes sin parafrasear). En la última columna enlaza a la evidencia concreta en el repo o en la demo.
+
+| # | Criterio / entregable (texto del PDF) | Peso / nota (si figura) | Evidencia en este trabajo |
+|---|----------------------------------------|-------------------------|----------------------------|
+| 1 | *(copiar del PDF)* | | |
+| 2 | | | |
+| 3 | | | |
+
+*(Añade filas según el número de apartados del PDF.)*
+
+---
+
+## Accesos operativos (revisión del entregable)
+
+| Qué revisar | Enlace |
+|-------------|--------|
 | **Repositorio GitHub** | [https://github.com/Amxncio/Enae-Chatbot-final](https://github.com/Amxncio/Enae-Chatbot-final) |
 | **Aplicación desplegada (Vercel)** | [https://enae-chatbot-final.vercel.app](https://enae-chatbot-final.vercel.app) |
 | **Tablero Jira (proyecto EV)** | [https://amxncio.atlassian.net/jira/software/projects/EV/boards/34](https://amxncio.atlassian.net/jira/software/projects/EV/boards/34) |
 | **Ejemplo de issue calendario real (VET-13)** | [https://amxncio.atlassian.net/browse/EV-17](https://amxncio.atlassian.net/browse/EV-17) |
 
-> **Nota:** En Jira la clave del proyecto es **EV-xx**; en títulos/descripciones se mantiene la etiqueta pedagógica **VET-n** del caso.
+> En Jira la clave del proyecto es **EV-xx**; en títulos y descripciones se mantiene la etiqueta pedagógica **VET-n** del caso.
 
 ---
 
-## 2. Documentación maestra en el repo (GitHub, rama `main`)
+## Documentación en el repo (rama `main`)
 
-| Entregable | Enlace (vista en GitHub) |
-|------------|---------------------------|
+| Documento | Enlace (vista en GitHub) |
+|-----------|---------------------------|
 | **README del proyecto** | [README.md](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/README.md) |
 | **Tabla “Paquete de entrega (nota 10)”** | Incluida en el README (sección homónima) |
 | **Reglas SDD / convenciones repo–Jira** | [docs/SDD_PROJECT_RULES.md](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/docs/SDD_PROJECT_RULES.md) |
-| **Conversaciones de aceptación (guion + fases script)** | [docs/acceptance_conversations.md](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/docs/acceptance_conversations.md) |
-| **Checklist de evidencias para entrega** | [docs/final_evidence_checklist.md](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/docs/final_evidence_checklist.md) |
-| **Catálogo de 20 intents (mapa conv. 1–10)** | [docs/intents_catalog.md](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/docs/intents_catalog.md) |
+| **Conversaciones de aceptación** | [docs/acceptance_conversations.md](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/docs/acceptance_conversations.md) |
+| **Checklist de evidencias** | [docs/final_evidence_checklist.md](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/docs/final_evidence_checklist.md) |
+| **Catálogo de 20 intents** | [docs/intents_catalog.md](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/docs/intents_catalog.md) |
 | **Reglas de negocio / Tetris** | [docs/business_rules.md](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/docs/business_rules.md) |
 | **Event Storming** | [docs/event_storming.md](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/docs/event_storming.md) |
 | **Material preparatorio** | [docs/preparatory.md](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/docs/preparatory.md) |
@@ -41,10 +65,10 @@ Documento índice con **enlaces directos** a lo que suele pedirse en el cierre d
 
 ---
 
-## 3. Código y API (referencia rápida)
+## Código y API (referencia rápida)
 
-| Entregable | Enlace |
-|------------|--------|
+| Componente | Enlace |
+|--------------|--------|
 | **Entrada FastAPI** | [app/main.py](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/app/main.py) |
 | **Motor del chat (memoria, slots, flujo)** | [app/bot.py](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/app/bot.py) |
 | **System prompt** | [app/prompt.py](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/app/prompt.py) |
@@ -56,52 +80,42 @@ Documento índice con **enlaces directos** a lo que suele pedirse en el cierre d
 | **Script transcripción aceptación** | [scripts/capture_acceptance_transcript.py](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/scripts/capture_acceptance_transcript.py) |
 | **Tests** | [tests/](https://github.com/Amxncio/Enae-Chatbot-final/tree/main/tests) |
 
-### API en producción (si Vercel expone OpenAPI)
+### API en producción
 
 - **Swagger:** [https://enae-chatbot-final.vercel.app/docs](https://enae-chatbot-final.vercel.app/docs)  
 - **ReDoc:** [https://enae-chatbot-final.vercel.app/redoc](https://enae-chatbot-final.vercel.app/redoc)  
 
-*(Si alguna ruta no respondiera tras un deploy, usar la misma ruta en local con `uvicorn`.)*
-
 ---
 
-## 4. RAG — fuente oficial del enunciado
+## RAG — fuente oficial del enunciado
 
-| Entregable | Enlace |
-|------------|--------|
+| Recurso | Enlace |
+|---------|--------|
 | **URL oficial de instrucciones preoperatorias** | [https://veterinary-clinic-teal.vercel.app/en/docs/instructions-before-operation](https://veterinary-clinic-teal.vercel.app/en/docs/instructions-before-operation) |
 | **Caché / fallback en repo** | [app/data/rag_source.txt](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/app/data/rag_source.txt) |
 
 ---
 
-## 5. Skills Cursor (SDD / enriquecimiento de tickets)
+## Skills Cursor (SDD / tickets)
 
-| Entregable | Enlace |
-|------------|--------|
-| **Skill enrich Jira** | [.cursor/skills/enrich-jira-ticket/SKILL.md](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/.cursor/skills/enrich-jira-ticket/SKILL.md) |
-| **Skill implementar desde spec** | [.cursor/skills/implement-from-spec/SKILL.md](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/.cursor/skills/implement-from-spec/SKILL.md) |
+| Skill | Enlace |
+|-------|--------|
+| **Enriquecer ticket Jira** | [.cursor/skills/enrich-jira-ticket/SKILL.md](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/.cursor/skills/enrich-jira-ticket/SKILL.md) |
+| **Implementar desde spec** | [.cursor/skills/implement-from-spec/SKILL.md](https://github.com/Amxncio/Enae-Chatbot-final/blob/main/.cursor/skills/implement-from-spec/SKILL.md) |
 
 ---
 
-## 6. Servicios externos (configuración, sin secretos)
+## Servicios externos (configuración, sin secretos)
 
 | Recurso | Enlace |
 |---------|--------|
 | **Claves Groq** | [https://console.groq.com/keys](https://console.groq.com/keys) |
-| **Panel Vercel (variables de entorno)** | [https://vercel.com/dashboard](https://vercel.com/dashboard) *(proyecto del alumno)* |
+| **Panel Vercel** | [https://vercel.com/dashboard](https://vercel.com/dashboard) |
 | **Calendly developers** | [https://developer.calendly.com/](https://developer.calendly.com/) |
 
 ---
 
-## 7. PDF del curso (Sesión 6 — criterios de evaluación)
-
-El PDF **“ENAE - Sesión 6_ Cierre, entrega del caso y criterios de evaluación”** suele estar en la plataforma del curso, no siempre en el repo exportado. **Contrasta** los requisitos de ese PDF con esta lista y añade aquí cualquier entrega adicional (vídeo, informe en PDF, fecha límite):
-
-- *(Anotaciones del alumno:)*  
-
----
-
-## 8. Comandos de verificación (para el profesor o el alumno)
+## Comandos de verificación
 
 ```bash
 git clone https://github.com/Amxncio/Enae-Chatbot-final.git && cd Enae-Chatbot-final
@@ -120,4 +134,4 @@ python scripts/capture_acceptance_transcript.py --phase all > docs/evidence/tran
 
 ---
 
-*Última actualización del índice: generado como documento de entrega; el hash de commit concreto puede anotarse con `git rev-parse HEAD` antes de la fecha límite.*
+*Índice de navegación al repo; los criterios de calificación son solo los del PDF de Sesión 6. Commit de referencia: anotar con `git rev-parse HEAD` antes de la entrega.*
