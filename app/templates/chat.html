@@ -34,7 +34,7 @@
       <small>Sterilisation scheduling &amp; pre-surgery info</small>
     </div>
     <div class="chat-messages" id="messages">
-      <div class="msg bot"><div class="msg-bubble">Le saluda la asistente virtual de la clínica veterinaria. Puede consultar información sobre preparación preoperatoria y normas del centro, o iniciar la solicitud de una cita de esterilización; en este caso le solicitaremos los datos necesarios de forma ordenada. Indíquenos en qué podemos ayudarle.</div></div>
+      <div class="msg bot"><div class="msg-bubble" id="welcomeBubble"></div></div>
     </div>
     <form class="chat-input" id="chatForm">
       <input type="text" id="msgInput" placeholder="Escriba su consulta o indique si desea solicitar una cita" autocomplete="off" autofocus>
@@ -43,6 +43,26 @@
   </div>
 
   <script>
+    function saludoHorarioEspana() {
+      const parts = new Intl.DateTimeFormat("es-ES", {
+        hour: "numeric",
+        hour12: false,
+        timeZone: "Europe/Madrid",
+      }).formatToParts(new Date());
+      const h = parseInt(parts.find(function (p) { return p.type === "hour"; }).value, 10);
+      if (h >= 6 && h < 14) return "Buenos días.";
+      if (h >= 14 && h < 21) return "Buenas tardes.";
+      return "Buenas noches.";
+    }
+
+    (function () {
+      var el = document.getElementById("welcomeBubble");
+      if (!el) return;
+      var resto =
+        " Le saluda la asistente virtual de la clínica veterinaria. Puede consultar información sobre preparación preoperatoria y normas del centro, o iniciar la solicitud de una cita de esterilización; en este caso le solicitaremos los datos necesarios de forma ordenada. Indíquenos en qué podemos ayudarle.";
+      el.textContent = saludoHorarioEspana() + resto;
+    })();
+
     const LS_SID = "vet_chat_session_id";
     const LS_SLOTS = "vet_chat_slot_state";
     let SESSION_ID = localStorage.getItem(LS_SID);
